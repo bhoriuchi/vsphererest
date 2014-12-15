@@ -31,7 +31,7 @@ public class OutputFilter {
 	    while (st.hasMoreTokens()) { filterProperties.add(st.nextToken()); }
 	    
 	    ObjectMapper mapper = new ObjectMapper();
-	    FilterProvider filters = new SimpleFilterProvider().addFilter("PropertyFilter", SimpleBeanPropertyFilter.filterOutAllExcept(filterProperties));
+	    FilterProvider filters = new SimpleFilterProvider().addFilter("myFilter", SimpleBeanPropertyFilter.filterOutAllExcept(filterProperties));
 		return mapper.writer(filters).writeValueAsString(this.object);
 	}
 	

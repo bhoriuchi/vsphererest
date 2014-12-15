@@ -1,8 +1,8 @@
 package com.vmware.vsphere.rest.controllers;
 
+
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -12,14 +12,13 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-
 import com.vmware.vsphere.rest.models.CustomVirtualMachine;
 import com.vmware.vsphere.rest.helpers.ViConnection;
-import com.vmware.vsphere.rest.helpers.OutputFilter;
 import com.vmware.vsphere.rest.helpers.SearchParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.VirtualMachine;
+import com.hubspot.jackson.jaxrs.PropertyFiltering;
+
 
 @Path("/{viServer}/vms")
 public class VirtualMachineController {
@@ -29,10 +28,10 @@ public class VirtualMachineController {
 	private int maxResults = 25;
 
 	@GET
+	@PropertyFiltering(using = "fields", defaults = "id,name")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getVms(@Context HttpHeaders headers, 
+	public List<CustomVirtualMachine> getEntity(@Context HttpHeaders headers, 
 			@PathParam("viServer") String viServer,
-			@DefaultValue("id,name") @QueryParam("fields") String fields,
 			@DefaultValue("0") @QueryParam("start") int start,
 			@DefaultValue("10") @QueryParam("results") int results,
 			@DefaultValue("") @QueryParam("search") String search) {
@@ -66,9 +65,9 @@ public class VirtualMachineController {
 			}
 			
 			// return filtered output
-			return new OutputFilter().getOutput(fields, vmList);
+			return vmList;
 
-		} catch (NullPointerException | JsonProcessingException e) {
+		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();
 		}
@@ -82,11 +81,11 @@ public class VirtualMachineController {
 	
 	@Path("{id}")
 	@GET
+	@PropertyFiltering(using = "fields", defaults = "id,name")
 	@Produces(MediaType.APPLICATION_JSON)
-	public CustomVirtualMachine getVmById(@Context HttpHeaders headers, 
+	public CustomVirtualMachine getEntityById(@Context HttpHeaders headers, 
 			@PathParam("viServer") String viServer,
-			@PathParam("id") String id,
-			@DefaultValue("id,name") @QueryParam("fields") String fields) {
+			@PathParam("id") String id) {
 
 		try {
 			
@@ -95,9 +94,8 @@ public class VirtualMachineController {
 			
 			if (m != null) {
 
-				// return filtered output
-				//return new OutputFilter().getOutput(fields, new CustomVirtualMachine((VirtualMachine) m));
-				return new CustomVirtualMachine((VirtualMachine) m);
+				CustomVirtualMachine vm = new CustomVirtualMachine((VirtualMachine) m);
+				return vm;
 			}
 			else {
 				return null;
