@@ -83,7 +83,7 @@ public class VirtualMachineController {
 	@Path("{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getVmById(@Context HttpHeaders headers, 
+	public CustomVirtualMachine getVmById(@Context HttpHeaders headers, 
 			@PathParam("viServer") String viServer,
 			@PathParam("id") String id,
 			@DefaultValue("id,name") @QueryParam("fields") String fields) {
@@ -96,13 +96,14 @@ public class VirtualMachineController {
 			if (m != null) {
 
 				// return filtered output
-				return new OutputFilter().getOutput(fields, new CustomVirtualMachine((VirtualMachine) m));
+				//return new OutputFilter().getOutput(fields, new CustomVirtualMachine((VirtualMachine) m));
+				return new CustomVirtualMachine((VirtualMachine) m);
 			}
 			else {
 				return null;
 			}
 
-		} catch (NullPointerException | JsonProcessingException e) {
+		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

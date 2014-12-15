@@ -10,13 +10,16 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import com.vmware.vsphere.rest.helpers.ViConnection;
+import com.vmware.vsphere.rest.models.CustomVirtualMachine;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ServiceInstance;
-//import com.vmware.vim25.mo.VirtualMachine;
+import com.vmware.vim25.mo.VirtualMachine;
 
 @Path("/test")
 public class Test {
@@ -29,26 +32,27 @@ public class Test {
 		String output = "";
 		ServiceInstance si = new ViConnection().getServiceInstance(headers, "pvvvspm005.directv.com");
 		Folder rootFolder = si.getRootFolder();
-		//ManagedEntity[] vms;
-		ManagedEntity vm;
+		ManagedEntity[] vms;
 		try {
-			//vms = new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
-			vm = new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", "tempnas01");
+			vms = new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
 			
-			//VirtualMachine vm = (VirtualMachine) vms[0];
-			ObjectMapper mapper = new ObjectMapper();
+			VirtualMachine vm = (VirtualMachine) vms[0];
+			
+			JsonNode tree = new JacksonJsonProvider().locateMapper(CustomVirtualMachine.class, MediaType.APPLICATION_JSON_TYPE).valueToTree(vm);
+			
+			//ObjectMapper mapper = new ObjectMapper();
 			
 			//String[] props = {"name","summary.vm"};
 			//output = mapper.writer().writeValueAsString(vms[0].getPropertiesByPaths(props));
-			output = mapper.writer().writeValueAsString(vm);
+			//output = mapper.writer().writeValueAsString(vm);
 			
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (JsonProcessingException e) {
+		} //catch (JsonProcessingException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			//e.printStackTrace();
+		//}
 
 		return output;
 	}

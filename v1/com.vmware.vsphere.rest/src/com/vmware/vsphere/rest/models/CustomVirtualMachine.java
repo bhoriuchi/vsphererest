@@ -6,7 +6,7 @@ import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachineSummary;
 import com.vmware.vim25.mo.VirtualMachine;
 
-@JsonFilter("myFilter")
+@JsonFilter("PropertyFilter")
 public class CustomVirtualMachine {
 	
 	
