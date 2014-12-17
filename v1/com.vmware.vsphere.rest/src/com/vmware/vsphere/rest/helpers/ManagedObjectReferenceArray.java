@@ -11,14 +11,18 @@ public class ManagedObjectReferenceArray {
 	public ManagedObjectReferenceArray() {
 	}
 
-	public List<ManagedObjectReference> getMORArray(Object[] objArray) {
+	public List<String> getMORArray(Object[] objArray, String ref) {
+
 		try {
 
-			List<ManagedObjectReference> objList = new ArrayList<ManagedObjectReference>();
+			List<String> objList = new ArrayList<String>();
+			ManagedObjectReferenceUri uri = new ManagedObjectReferenceUri();
 
-			for (Object o : objArray) {
-				objList.add((ManagedObjectReference) o.getClass()
-						.getMethod("getMOR").invoke(o));
+			if (objArray != null) {
+				for (Object o : objArray) {
+					objList.add(uri.getUri((ManagedObjectReference) o.getClass()
+							.getMethod("getMOR").invoke(o), ref));
+				}
 			}
 			return objList;
 

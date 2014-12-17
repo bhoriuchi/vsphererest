@@ -9,5 +9,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PropertyFiltering {
 	String using() default "property";
+	
+	/*
+	 * Added default option to specify default fields in the annotation
+	 * Branden Horiuchi <bhoriuchi@gmail.com>
+	 */
 	String defaults() default "";
 }

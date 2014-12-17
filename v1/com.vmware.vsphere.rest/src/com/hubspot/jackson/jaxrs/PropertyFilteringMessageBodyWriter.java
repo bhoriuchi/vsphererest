@@ -90,8 +90,14 @@ public class PropertyFilteringMessageBodyWriter implements
 
 	private Collection<String> getProperties(String name, String defaults) {
 		
+		/*
+		 * Added ability to specify default values as a comma delimited list
+		 * in the annotation as well as an all switch to return all values
+		 * Branden Horiuchi <bhoriuchi@gmail.com>
+		 */
 		List<String> defaultValue = Arrays.asList(defaults.split(","));
 		List<String> values = uriInfo.getQueryParameters().getOrDefault(name, defaultValue);
+		if (values.contains("all")) { values = null; }
 		
 		List<String> properties = new ArrayList<String>();
 		if (values != null) {

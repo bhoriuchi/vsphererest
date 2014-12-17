@@ -99,11 +99,11 @@ public class ViConnection {
 
 		try {
 			Folder rootFolder = this.si.getRootFolder();
-			ManagedEntity[] vms = new InventoryNavigator(rootFolder).searchManagedEntities(type);
+			ManagedEntity[] entities = new InventoryNavigator(rootFolder).searchManagedEntities(type);
 
-			for (ManagedEntity vm : vms) {
+			for (ManagedEntity e : entities) {
 
-				if (vm.getMOR().getVal().toLowerCase().equals(id.toLowerCase())) { return vm; }
+				if (e.getMOR().getVal().toLowerCase().equals(id.toLowerCase())) { return e; }
 			}
 			
 		}  catch (NullPointerException | RemoteException e) {
