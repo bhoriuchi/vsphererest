@@ -19,6 +19,7 @@ import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.VirtualMachine;
+import com.vmware.vim25.VirtualMachineConfigSpec;
 
 @Path("/test")
 public class Test {
@@ -53,6 +54,19 @@ public class Test {
 		//}
 
 		return output;
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("spec")
+	public VirtualMachineConfigSpec getTest2(@Context HttpHeaders headers) {
+		VirtualMachineConfigSpec spec = new VirtualMachineConfigSpec();
+		
+		spec.alternateGuestName = "";
+		
+		
+		return spec;
+		
 	}
 	
 }
