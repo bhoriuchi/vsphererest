@@ -3,10 +3,8 @@ package com.vmware.vsphere.rest.controllers;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -16,19 +14,16 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import com.vmware.vsphere.rest.models.RESTNewVirtualMachine;
-import com.vmware.vsphere.rest.models.RESTVirtualMachine;
+import com.vmware.vsphere.rest.models.RESTNetwork;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 import com.vmware.vsphere.rest.helpers.SearchParser;
 import com.vmware.vim25.mo.ManagedEntity;
-import com.vmware.vim25.mo.ServiceInstance;
-import com.vmware.vim25.mo.VirtualMachine;
-import com.vmware.vim25.mo.HostSystem;
+import com.vmware.vim25.mo.Network;
 import com.hubspot.jackson.jaxrs.PropertyFiltering;
 
 
-@Path("/{viServer}/virtualmachines")
-public class VirtualMachineController {
+@Path("/{viServer}/networks")
+public class NetworkController {
 
 	// default values
 	private int count = 0;
@@ -43,7 +38,7 @@ public class VirtualMachineController {
 	@GET
 	@PropertyFiltering(using = "fields", defaults = defaults)
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<RESTVirtualMachine> getEntity(@Context HttpHeaders headers, 
+	public List<RESTNetwork> getEntity(@Context HttpHeaders headers, 
 			@PathParam("viServer") String viServer,
 			@DefaultValue("0") @QueryParam("start") int start,
 			@DefaultValue("50") @QueryParam("results") int results,
@@ -59,18 +54,16 @@ public class VirtualMachineController {
 	    if (results > this.maxResults) { results = this.maxResults; }
 	    
 		try {
-			
-			// create a new list and get all VMs
-			List<RESTVirtualMachine> moList = new ArrayList<RESTVirtualMachine>();
-			ManagedEntity[] e = new ViConnection().getEntities("VirtualMachine", headers, viServer);
+
+			List<RESTNetwork> moList = new ArrayList<RESTNetwork>();
+			ManagedEntity[] e = new ViConnection().getEntities("Network", headers, viServer);
 			SearchParser sp = new SearchParser(search);
 			
 			for (ManagedEntity m : e) {
 
 				if (position >= start) {
 					
-					// create a new custom virtual machine object
-					RESTVirtualMachine mo = new RESTVirtualMachine((VirtualMachine) m, thisUri, fieldStr);
+					RESTNetwork mo = new RESTNetwork((Network) m, thisUri, fieldStr);
 					if (sp.Match(mo)) {
 						moList.add(mo);
 						this.count++;
@@ -91,15 +84,11 @@ public class VirtualMachineController {
 		return null;
 	}
 	
-	
-	
-	
-	
 	@Path("{id}")
 	@GET
 	@PropertyFiltering(using = "fields", defaults = defaults)
 	@Produces(MediaType.APPLICATION_JSON)
-	public RESTVirtualMachine getEntityById(@Context HttpHeaders headers,
+	public RESTNetwork getEntityById(@Context HttpHeaders headers,
 			@PathParam("viServer") String viServer,
 			@PathParam("id") String id, @QueryParam("fields") String fields) {
 		
@@ -112,11 +101,11 @@ public class VirtualMachineController {
 		try {
 			
 			// Get the entity that matches the id
-			ManagedEntity m = new ViConnection().getEntity("VirtualMachine", id, headers, viServer);
+			ManagedEntity m = new ViConnection().getEntity("Network", id, headers, viServer);
 			
 			if (m != null) {
 
-				RESTVirtualMachine mo = new RESTVirtualMachine((VirtualMachine) m, thisUri, fieldStr);
+				RESTNetwork mo = new RESTNetwork((Network) m, thisUri, fieldStr);
 				return mo;
 			}
 			else {
@@ -129,25 +118,6 @@ public class VirtualMachineController {
 		}
 		
 		return null;
-	}
-	
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public RESTNewVirtualMachine postEntity(@Context HttpHeaders headers,
-			@PathParam("viServer") String viServer, RESTNewVirtualMachine newvm) {
-	
-		
-		ViConnection vi = new ViConnection(headers, viServer);
-		ServiceInstance si = vi.getServiceInstance();
-		String rootFolder = si.getRootFolder().getMOR().getVal();
-		HostSystem hst = (HostSystem) vi.getEntity("HostSystem", newvm.getHost());
-		hst.getParent().getMOR().getType();
-		
-		if (newvm.getFolder() == null) { newvm.setFolder(rootFolder); }
-		
-		
-		return new RESTNewVirtualMachine();
 	}
 
 }

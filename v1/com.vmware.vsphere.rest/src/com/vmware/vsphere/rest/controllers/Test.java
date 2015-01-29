@@ -14,36 +14,36 @@ import com.vmware.vsphere.rest.models.RESTVirtualMachine;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.hubspot.jackson.jaxrs.PropertyFiltering;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.VirtualMachine;
+import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.VirtualMachineConfigSpec;
 
 @Path("/test")
 public class Test {
 	
+	final static String defaults = "id,name";
+	
 	@GET
+	@PropertyFiltering(using = "fields", defaults = defaults)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getTest(@Context HttpHeaders headers) {
 
+		ManagedObjectReference mor = new ManagedObjectReference();
 		
-		String output = "";
+		VirtualMachine vm = null;
 		ServiceInstance si = new ViConnection().getServiceInstance(headers, "pvvvspm005.directv.com");
 		Folder rootFolder = si.getRootFolder();
 		ManagedEntity[] vms;
 		try {
 			vms = new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
 			
-			VirtualMachine vm = (VirtualMachine) vms[0];
-			JsonNode tree = new JacksonJsonProvider().locateMapper(RESTVirtualMachine.class, MediaType.APPLICATION_JSON_TYPE).valueToTree(vm);
+			return vms[0].getName();
 			
-			//ObjectMapper mapper = new ObjectMapper();
-			
-			//String[] props = {"name","summary.vm"};
-			//output = mapper.writer().writeValueAsString(vms[0].getPropertiesByPaths(props));
-			//output = mapper.writer().writeValueAsString(vm);
 			
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -53,7 +53,7 @@ public class Test {
 			//e.printStackTrace();
 		//}
 
-		return output;
+		return null;
 	}
 	
 	@GET

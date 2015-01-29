@@ -25,8 +25,16 @@ public class SearchParser {
 	public void ParseSearch() {
 
 		try {
+			
 			String search = URLDecoder.decode(this.search, "UTF-8");
 
+			/*
+			 * The search string is passed in from the querystring search
+			 * searches take the form <path.to.field>-<search type>(<search value>)
+			 * for example search=guest.net.network-matches(10.1.1)
+			 * valid operators are equals, notequals, matches, notmatches
+			 */
+			
 			if (search.indexOf("-") != -1 && search.indexOf("(") != -1
 					&& search.indexOf(")") != -1) {
 				this.field = search.substring(0, search.indexOf("-"));

@@ -27,7 +27,7 @@ import com.vmware.vim25.VirtualDeviceConnectInfoStatus;
 import com.vmware.vim25.VirtualDeviceConfigSpecOperation;
 
 
-@Path("/{viServer}/example")
+@Path("/example")
 public class ExampleController {
 
 	@GET
@@ -68,6 +68,7 @@ public class ExampleController {
 		spec.cpuHotAddEnabled = false;
 		spec.cpuHotRemoveEnabled = false;
 		spec.deviceChange = new VirtualDeviceConfigSpec[1];
+		spec.deviceChange[0] = new VirtualDeviceConfigSpec();
 		spec.deviceChange[0].device = new VirtualDevice();
 		spec.deviceChange[0].device.backing = null;
 		spec.deviceChange[0].device.connectable = new VirtualDeviceConnectInfo();
@@ -85,6 +86,7 @@ public class ExampleController {
 		spec.deviceChange[0].fileOperation = VirtualDeviceConfigSpecFileOperation.create;
 		spec.deviceChange[0].operation = VirtualDeviceConfigSpecOperation.add;
 		spec.extraConfig = new OptionValue[1];
+		spec.extraConfig[0] = new OptionValue();
 		spec.extraConfig[0].key = "nvram";
 		spec.extraConfig[0].value = "server.nvram";
 		

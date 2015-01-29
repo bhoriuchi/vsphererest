@@ -4,14 +4,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.vmware.vim25.ManagedObjectReference;
-
 public class ManagedObjectReferenceArray {
 
 	public ManagedObjectReferenceArray() {
 	}
 
-	public List<String> getMORArray(Object[] objArray, String ref) {
+	public List<String> getMORArray(Object[] objArray, String ref) throws InvocationTargetException, NoSuchMethodException {
 
 		try {
 
@@ -20,14 +18,17 @@ public class ManagedObjectReferenceArray {
 
 			if (objArray != null) {
 				for (Object o : objArray) {
+					
+					/*
 					objList.add(uri.getUri((ManagedObjectReference) o.getClass()
 							.getMethod("getMOR").invoke(o), ref));
+							*/
+					objList.add(uri.getUri(o, ref));
 				}
 			}
 			return objList;
 
-		} catch (IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException
+		} catch (IllegalArgumentException
 				| SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

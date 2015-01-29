@@ -1,17 +1,12 @@
 package com.vmware.vsphere.rest.models;
 
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import com.vmware.vim25.AlarmState;
-import com.vmware.vim25.CustomFieldDef;
-import com.vmware.vim25.CustomFieldValue;
-import com.vmware.vim25.Event;
 import com.vmware.vim25.GuestInfo;
 import com.vmware.vim25.ManagedEntityStatus;
-import com.vmware.vim25.Permission;
 import com.vmware.vim25.ResourceConfigSpec;
-import com.vmware.vim25.Tag;
 import com.vmware.vim25.VirtualMachineCapability;
 import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachineFileLayout;
@@ -25,227 +20,156 @@ import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
-public class RESTVirtualMachine {
+public class RESTVirtualMachine extends RESTManagedEntity {
 
-	private String id;
-	private String name;
-
-	private boolean alarmActionsEnabled;
-	private CustomFieldDef[] availableField;
 	private VirtualMachineCapability capability;
 	private VirtualMachineConfigInfo config;
-	private Event[] configIssues;
-	private ManagedEntityStatus configStatus;
-	private CustomFieldValue[] customValue;
 	private List<String> datastore;
-	private AlarmState[] declaredAlarmState;
-	private String[] disabledMethod;
-	private int[] effectiveRole;
-	private String environmentBrowser;
+	private String environmentBrowser;	
 	private GuestInfo guest;
 	private ManagedEntityStatus guestHeartbeatStatus;
 	private VirtualMachineFileLayout layout;
 	private VirtualMachineFileLayoutEx layoutEx;
 	private List<String> network;
-	private ManagedEntityStatus overallStatus;
-	private String parent;
 	private String parentVApp;
-	private Permission[] permission;
 	private ResourceConfigSpec resourceConfig;
 	private String resourcePool;
-	private List<String> recentTask;
 	private List<String> rootSnapshot;
 	private VirtualMachineRuntimeInfo runtime;
 	private VirtualMachineSnapshotInfo snapshot;
 	private VirtualMachineStorageInfo storage;
 	private VirtualMachineSummary summary;
-	private Tag[] tag;
-	private AlarmState[] triggeredAlarmState;
-	private CustomFieldValue[] value;
-	private String moRef;
-
+	
 	// constructor
 	public RESTVirtualMachine() {
 	}
 
 	// overloaded constructor
-	public RESTVirtualMachine(VirtualMachine vm, String uri, String fields) {
+	public RESTVirtualMachine(VirtualMachine mo, String uri, String fields) {
 
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
 		try {
 
-			// basic values
-			if (fg.get("id", fields)) {
-				this.setId(vm.getMOR().getVal());
-			}
-			if (fg.get("name", fields)) {
-				this.setName(vm.getName());
-			}
-
-			// extended values
-			if (fg.get("alarmActionsEnabled", fields)) {
-				this.setAlarmActionsEnabled(vm.getAlarmActionEabled());
-			}
-			if (fg.get("availableField", fields)) {
-				this.setAvailableField(vm.getAvailableField());
-			}
+			// virtual machine specific fields
 			if (fg.get("capability", fields)) {
-				this.setCapability(vm.getCapability());
+				this.setCapability(mo.getCapability());
 			}
 			if (fg.get("config", fields)) {
-				this.setConfig(vm.getConfig());
-			}
-			if (fg.get("configIssues", fields)) {
-				this.setConfigIssues(vm.getConfigIssue());
-			}
-			if (fg.get("configStatus", fields)) {
-				this.setConfigStatus(vm.getConfigStatus());
-			}
-			if (fg.get("customValue", fields)) {
-				this.setCustomValue(vm.getCustomValue());
-			}
+				this.setConfig(mo.getConfig());
+			}		
 			if (fg.get("datastore", fields)) {
-				this.setDatastore(new ManagedObjectReferenceArray().getMORArray(vm.getDatastores(), uri));
-			}
-			if (fg.get("declaredAlarmState", fields)) {
-				this.setDeclaredAlarmState(vm.getDeclaredAlarmState());
-			}
-			if (fg.get("disabledMethod", fields)) {
-				this.setDisabledMethod(vm.getDisabledMethod());
-			}
-			if (fg.get("effectiveRole", fields)) {
-				this.setEffectiveRole(vm.getEffectiveRole());
-			}
+				this.setDatastore(new ManagedObjectReferenceArray().getMORArray(mo.getDatastores(), uri));
+			}	
 			if (fg.get("environmentBrowser", fields)) {
-				this.setEnvironmentBrowser(new ManagedObjectReferenceUri().getUri(vm.getEnvironmentBrowser().getMOR(), uri));
+				this.setEnvironmentBrowser(new ManagedObjectReferenceUri().getUri(mo.getEnvironmentBrowser(), uri));
 			}
 			if (fg.get("guest", fields)) {
-				this.setGuest(vm.getGuest());
+				this.setGuest(mo.getGuest());
 			}
 			if (fg.get("guestHeartbeatStatus", fields)) {
-				this.setGuestHeartbeatStatus(vm.getGuestHeartbeatStatus());
+				this.setGuestHeartbeatStatus(mo.getGuestHeartbeatStatus());
 			}
 			if (fg.get("layout", fields)) {
-				this.setLayout(vm.getLayout());
+				this.setLayout(mo.getLayout());
 			}
 			if (fg.get("layoutEx", fields)) {
-				this.setLayoutEx(vm.getLayoutEx());
+				this.setLayoutEx(mo.getLayoutEx());
 			}
 			if (fg.get("network", fields)) {
-				this.setNetwork(new ManagedObjectReferenceArray().getMORArray(vm.getNetworks(), uri));
-			}
-			if (fg.get("overallStatus", fields)) {
-				this.setOverallStatus(vm.getOverallStatus());
-			}
-			if (fg.get("parent", fields)) {
-				this.setParent(new ManagedObjectReferenceUri().getUri(vm.getParent().getMOR(), uri));
+				this.setNetwork(new ManagedObjectReferenceArray().getMORArray(mo.getNetworks(), uri));
 			}
 			if (fg.get("parentVApp", fields)) {
-				this.setParentVApp(new ManagedObjectReferenceUri().getUri(vm.getParentVApp().getMOR(), uri));
-			}
-			if (fg.get("permission", fields)) {
-				this.setPermission(vm.getPermission());
-			}
-			if (fg.get("recentTask", fields)) {
-				this.setRecentTask(new ManagedObjectReferenceArray().getMORArray(vm.getRecentTasks(), uri));
+				this.setParentVApp(new ManagedObjectReferenceUri().getUri(mo.getParentVApp(), uri));
 			}
 			if (fg.get("resourceConfig", fields)) {
-				this.setResourceConfig(vm.getResourceConfig());
+				this.setResourceConfig(mo.getResourceConfig());
 			}
 			if (fg.get("resourcePool", fields)) {
-				this.setResourcePool(new ManagedObjectReferenceUri().getUri(vm.getResourcePool().getMOR(), uri));
+				this.setResourcePool(new ManagedObjectReferenceUri().getUri(mo.getResourcePool(), uri));
 			}
 			if (fg.get("rootSnapshot", fields)) {
-				this.setRootSnapshot(new ManagedObjectReferenceArray().getMORArray(vm.getRootSnapshot(), uri));
+				this.setRootSnapshot(new ManagedObjectReferenceArray().getMORArray(mo.getRootSnapshot(), uri));
 			}
 			if (fg.get("runtime", fields)) {
-				this.setRuntime(vm.getRuntime());
+				this.setRuntime(mo.getRuntime());
 			}
 			if (fg.get("snapshot", fields)) {
-				this.setSnapshot(vm.getSnapshot());
+				this.setSnapshot(mo.getSnapshot());
 			}
 			if (fg.get("storage", fields)) {
-				this.setStorage(vm.getStorage());
+				this.setStorage(mo.getStorage());
 			}
 			if (fg.get("summary", fields)) {
-				this.setSummary(vm.getSummary());
-			}
-			if (fg.get("tag", fields)) {
-				this.setTag(vm.getTag());
-			}
-			if (fg.get("triggeredAlarmState", fields)) {
-				this.setTriggeredAlarmState(vm.getTriggeredAlarmState());
-			}
-			if (fg.get("value", fields)) {
-				this.setValue(vm.getValues());
-			}
-			if (fg.get("moRef", fields)) {
-				this.setMoRef(vm.getMOR().getType() + "-" + vm.getMOR().getVal());
+				this.setSummary(mo.getSummary());
 			}
 
-		} catch (RemoteException e) {
+
+			// extended from RESTManagedObject
+			if (fg.get("id", fields)) {
+				this.setId(mo.getMOR().getVal());
+			}
+			if (fg.get("moRef", fields)) {
+				this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
+			}
+			
+			// extended from RESTExtensibleManagedObject
+			if (fg.get("availableField", fields)) {
+				this.setAvailableField(mo.getAvailableField());
+			}		
+			if (fg.get("value", fields)) {
+				this.setValue(mo.getValues());
+			}			
+			
+			// extended from RESTManagedEntity
+			if (fg.get("alarmActionsEnabled", fields)) {
+				this.setAlarmActionsEnabled(mo.getAlarmActionEabled());
+			}
+			if (fg.get("configIssue", fields)) {
+				this.setConfigIssue(mo.getConfigIssue());
+			}
+			if (fg.get("configStatus", fields)) {
+				this.setConfigStatus(mo.getConfigStatus());
+			}
+			if (fg.get("customValue", fields)) {
+				this.setCustomValue(mo.getCustomValue());
+			}
+			if (fg.get("declaredAlarmState", fields)) {
+				this.setDeclaredAlarmState(mo.getDeclaredAlarmState());
+			}
+			if (fg.get("disabledMethod", fields)) {
+				this.setDisabledMethod(mo.getDisabledMethod());
+			}
+			if (fg.get("effectiveRole", fields)) {
+				this.setEffectiveRole(mo.getEffectiveRole());
+			}
+			if (fg.get("name", fields)) {
+				this.setName(mo.getName());
+			}
+			if (fg.get("overallStatus", fields)) {
+				this.setOverallStatus(mo.getOverallStatus());
+			}
+			if (fg.get("parent", fields)) {
+				this.setParent(new ManagedObjectReferenceUri().getUri(mo.getParent(), uri));
+			}
+			if (fg.get("permission", fields)) {
+				this.setPermission(mo.getPermission());
+			}
+			if (fg.get("recentTask", fields)) {
+				this.setRecentTask(new ManagedObjectReferenceArray().getMORArray(mo.getRecentTasks(), uri));
+			}
+			if (fg.get("tag", fields)) {
+				this.setTag(mo.getTag());
+			}
+			if (fg.get("triggeredAlarmState", fields)) {
+				this.setTriggeredAlarmState(mo.getTriggeredAlarmState());
+			}		
+
+		} catch (RemoteException | InvocationTargetException | NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	// access functions
-	/**
-	 * @return the id
-	 */
-	public String getId() {
-		return id;
-	}
-
-	/**
-	 * @param id the id to set
-	 */
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * @return the alarmActionsEnabled
-	 */
-	public boolean isAlarmActionsEnabled() {
-		return alarmActionsEnabled;
-	}
-
-	/**
-	 * @param alarmActionsEnabled the alarmActionsEnabled to set
-	 */
-	public void setAlarmActionsEnabled(boolean alarmActionsEnabled) {
-		this.alarmActionsEnabled = alarmActionsEnabled;
-	}
-
-	/**
-	 * @return the availableField
-	 */
-	public CustomFieldDef[] getAvailableField() {
-		return availableField;
-	}
-
-	/**
-	 * @param availableField the availableField to set
-	 */
-	public void setAvailableField(CustomFieldDef[] availableField) {
-		this.availableField = availableField;
 	}
 
 	/**
@@ -277,48 +201,6 @@ public class RESTVirtualMachine {
 	}
 
 	/**
-	 * @return the configIssues
-	 */
-	public Event[] getConfigIssues() {
-		return configIssues;
-	}
-
-	/**
-	 * @param configIssues the configIssues to set
-	 */
-	public void setConfigIssues(Event[] configIssues) {
-		this.configIssues = configIssues;
-	}
-
-	/**
-	 * @return the configStatus
-	 */
-	public ManagedEntityStatus getConfigStatus() {
-		return configStatus;
-	}
-
-	/**
-	 * @param configStatus the configStatus to set
-	 */
-	public void setConfigStatus(ManagedEntityStatus configStatus) {
-		this.configStatus = configStatus;
-	}
-
-	/**
-	 * @return the customValue
-	 */
-	public CustomFieldValue[] getCustomValue() {
-		return customValue;
-	}
-
-	/**
-	 * @param customValue the customValue to set
-	 */
-	public void setCustomValue(CustomFieldValue[] customValue) {
-		this.customValue = customValue;
-	}
-
-	/**
 	 * @return the datastore
 	 */
 	public List<String> getDatastore() {
@@ -330,48 +212,6 @@ public class RESTVirtualMachine {
 	 */
 	public void setDatastore(List<String> datastore) {
 		this.datastore = datastore;
-	}
-
-	/**
-	 * @return the declaredAlarmState
-	 */
-	public AlarmState[] getDeclaredAlarmState() {
-		return declaredAlarmState;
-	}
-
-	/**
-	 * @param declaredAlarmState the declaredAlarmState to set
-	 */
-	public void setDeclaredAlarmState(AlarmState[] declaredAlarmState) {
-		this.declaredAlarmState = declaredAlarmState;
-	}
-
-	/**
-	 * @return the disabledMethod
-	 */
-	public String[] getDisabledMethod() {
-		return disabledMethod;
-	}
-
-	/**
-	 * @param disabledMethod the disabledMethod to set
-	 */
-	public void setDisabledMethod(String[] disabledMethod) {
-		this.disabledMethod = disabledMethod;
-	}
-
-	/**
-	 * @return the effectiveRole
-	 */
-	public int[] getEffectiveRole() {
-		return effectiveRole;
-	}
-
-	/**
-	 * @param effectiveRole the effectiveRole to set
-	 */
-	public void setEffectiveRole(int[] effectiveRole) {
-		this.effectiveRole = effectiveRole;
 	}
 
 	/**
@@ -459,34 +299,6 @@ public class RESTVirtualMachine {
 	}
 
 	/**
-	 * @return the overallStatus
-	 */
-	public ManagedEntityStatus getOverallStatus() {
-		return overallStatus;
-	}
-
-	/**
-	 * @param overallStatus the overallStatus to set
-	 */
-	public void setOverallStatus(ManagedEntityStatus overallStatus) {
-		this.overallStatus = overallStatus;
-	}
-
-	/**
-	 * @return the parent
-	 */
-	public String getParent() {
-		return parent;
-	}
-
-	/**
-	 * @param parent the parent to set
-	 */
-	public void setParent(String parent) {
-		this.parent = parent;
-	}
-
-	/**
 	 * @return the parentVApp
 	 */
 	public String getParentVApp() {
@@ -498,20 +310,6 @@ public class RESTVirtualMachine {
 	 */
 	public void setParentVApp(String parentVApp) {
 		this.parentVApp = parentVApp;
-	}
-
-	/**
-	 * @return the permission
-	 */
-	public Permission[] getPermission() {
-		return permission;
-	}
-
-	/**
-	 * @param permission the permission to set
-	 */
-	public void setPermission(Permission[] permission) {
-		this.permission = permission;
 	}
 
 	/**
@@ -540,20 +338,6 @@ public class RESTVirtualMachine {
 	 */
 	public void setResourcePool(String resourcePool) {
 		this.resourcePool = resourcePool;
-	}
-
-	/**
-	 * @return the recentTask
-	 */
-	public List<String> getRecentTask() {
-		return recentTask;
-	}
-
-	/**
-	 * @param recentTask the recentTask to set
-	 */
-	public void setRecentTask(List<String> recentTask) {
-		this.recentTask = recentTask;
 	}
 
 	/**
@@ -625,61 +409,4 @@ public class RESTVirtualMachine {
 	public void setSummary(VirtualMachineSummary summary) {
 		this.summary = summary;
 	}
-
-	/**
-	 * @return the tag
-	 */
-	public Tag[] getTag() {
-		return tag;
-	}
-
-	/**
-	 * @param tag the tag to set
-	 */
-	public void setTag(Tag[] tag) {
-		this.tag = tag;
-	}
-
-	/**
-	 * @return the triggeredAlarmState
-	 */
-	public AlarmState[] getTriggeredAlarmState() {
-		return triggeredAlarmState;
-	}
-
-	/**
-	 * @param triggeredAlarmState the triggeredAlarmState to set
-	 */
-	public void setTriggeredAlarmState(AlarmState[] triggeredAlarmState) {
-		this.triggeredAlarmState = triggeredAlarmState;
-	}
-
-	/**
-	 * @return the value
-	 */
-	public CustomFieldValue[] getValue() {
-		return value;
-	}
-
-	/**
-	 * @param value the value to set
-	 */
-	public void setValue(CustomFieldValue[] value) {
-		this.value = value;
-	}
-
-	/**
-	 * @return the moRef
-	 */
-	public String getMoRef() {
-		return moRef;
-	}
-
-	/**
-	 * @param moRef the moRef to set
-	 */
-	public void setMoRef(String moRef) {
-		this.moRef = moRef;
-	}
-
 }
