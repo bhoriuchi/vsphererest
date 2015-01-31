@@ -20,7 +20,11 @@ import com.vmware.vim25.mo.ManagedObject;
 import com.vmware.vim25.mo.util.MorUtil;
 import com.hubspot.jackson.jaxrs.PropertyFiltering;
 
-
+/*
+ * Generic Object type controller. This will only work for objects that do not have 
+ * fields that point to a managed object reference as MORs will through an infinite
+ * recursion fault most of the time
+ */
 @Path("/{viServer}/{objectType}s")
 public class ManagedObjectController {
 
@@ -38,13 +42,6 @@ public class ManagedObjectController {
 			@PathParam("viServer") String viServer, @PathParam("objectType") String objectType,
 			@PathParam("id") String id, @QueryParam("fields") String fields) {
 		
-		
-		// initialize variables
-		/*
-		String thisUri = uri.getBaseUri().toString() + viServer + "/";
-	    String fieldStr = defaults;
-	    if (fields != null) { fieldStr = fields; }
-		 */
 	    System.out.println("running managed object controller");
 	    
 		try {

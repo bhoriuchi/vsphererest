@@ -65,12 +65,35 @@ public class SearchParser {
 		}
 	}
 
+	public Field getAnyField(Class<?> cl, String field)
+	{
+		try {
+			Field f = cl.getDeclaredField(field);
+			return f;
+			
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			// TODO Auto-generated catch block
+			if (cl.getSuperclass() != null) {
+				return getAnyField(cl.getSuperclass(), field);
+			}
+			else {
+				e.printStackTrace();
+			}
+			
+		}
+		return null;
+	}
+	
 	// helper function to drill down into an object
 	public Object getObject(Object object, String field) {
-
+		
 		try {
 
-			Field f = object.getClass().getDeclaredField(field);
+			//Field f = object.getClass().getDeclaredField(field);
+			Field f = getAnyField(object.getClass(), field);
 			f.setAccessible(true);
 
 			// check if the field is accessible and return it
@@ -88,10 +111,9 @@ public class SearchParser {
 						return m.invoke(object);
 					}
 				}
-
 			}
 
-		} catch (NullPointerException | NoSuchFieldException
+		} catch (NullPointerException
 				| SecurityException | IllegalArgumentException
 				| IllegalAccessException | InvocationTargetException e) {
 			// TODO Auto-generated catch block

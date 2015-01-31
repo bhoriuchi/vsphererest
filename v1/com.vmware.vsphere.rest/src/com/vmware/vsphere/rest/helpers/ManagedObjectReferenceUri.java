@@ -12,14 +12,19 @@ public class ManagedObjectReferenceUri {
 	public String getUri(Object o, String uri) {
 
 		String ref = null;
+		ManagedObjectReference mor;
 
 		if (o != null) {
 
 			try {
 				
-				// get the managed object reference
-				ManagedObjectReference mor = (ManagedObjectReference) o.getClass().getMethod("getMOR").invoke(o);
-				
+				if (o instanceof ManagedObjectReference) {
+					mor = (ManagedObjectReference) o;
+				}
+				else {
+					// get the managed object reference
+					mor = (ManagedObjectReference) o.getClass().getMethod("getMOR").invoke(o);
+				}
 				// construct the reference URI. Add an s to the object type
 				// to make the REST call plural per best practice
 				if (mor != null) {
