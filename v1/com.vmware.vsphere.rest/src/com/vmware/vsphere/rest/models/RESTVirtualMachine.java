@@ -46,7 +46,11 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTVirtualMachine(VirtualMachine mo, String uri, String fields) {
-
+		this.init(mo, uri, fields);
+	}
+	
+	public void init(VirtualMachine mo, String uri, String fields)
+	{
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		

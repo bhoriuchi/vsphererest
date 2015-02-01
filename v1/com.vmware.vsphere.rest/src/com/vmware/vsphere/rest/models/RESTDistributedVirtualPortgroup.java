@@ -9,7 +9,7 @@ import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
-public class RESTDistributedVirtualPortgroup extends RESTManagedEntity {
+public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 	
 	private DVPortgroupConfigInfo config;
 	private String key;
@@ -38,6 +38,17 @@ public class RESTDistributedVirtualPortgroup extends RESTManagedEntity {
 				this.setPortKeys(mo.getPortKeys());
 			}
 			
+			
+			// extended from RESTNetwork
+			if (fg.get("host", fields)) {
+				this.setHost(new ManagedObjectReferenceArray().getMORArray(mo.getHosts(), uri));
+			}
+			if (fg.get("summary", fields)) {
+				this.setSummary(mo.getSummary());
+			}
+			if (fg.get("vm", fields)) {
+				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVms(), uri));
+			}
 			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {

@@ -22,6 +22,10 @@ public class RESTNetwork extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTNetwork(Network mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
+
+	public void init(Network mo, String uri, String fields) {
 
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
@@ -106,7 +110,6 @@ public class RESTNetwork extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-
 	/**
 	 * @return the host
 	 */

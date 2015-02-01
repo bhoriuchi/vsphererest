@@ -22,4 +22,8 @@
 		<servlet-name>vSphere REST</servlet-name>
 		<url-pattern>/api/*</url-pattern>
 	</servlet-mapping>
+	<context-param>
+		<param-name>vsphereRestProperties</param-name>
+		<param-value>vsphereRest.properties</param-value>
+	</context-param>
 </web-app>

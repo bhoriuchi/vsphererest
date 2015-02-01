@@ -38,7 +38,10 @@ public class RESTHostSystem extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTHostSystem(HostSystem mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(HostSystem mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -152,7 +155,7 @@ public class RESTHostSystem extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * @return the capability
 	 */

@@ -30,7 +30,10 @@ public class RESTDatastore extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTDatastore(Datastore mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(Datastore mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -59,10 +62,7 @@ public class RESTDatastore extends RESTManagedEntity {
 				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVms(), uri));
 			}
 			
-			
-			
-			
-			
+
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
 				this.setId(mo.getMOR().getVal());
@@ -130,7 +130,7 @@ public class RESTDatastore extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * @return the capability
 	 */
