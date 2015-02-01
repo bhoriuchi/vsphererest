@@ -30,7 +30,10 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTDistributedVirtualSwitch(DistributedVirtualSwitch mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(DistributedVirtualSwitch mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -124,7 +127,7 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * @return the capability
 	 */

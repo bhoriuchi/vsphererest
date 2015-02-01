@@ -20,7 +20,10 @@ public class RESTFolder extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTFolder(Folder mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(Folder mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -102,7 +105,7 @@ public class RESTFolder extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * @return the childEntity
 	 */

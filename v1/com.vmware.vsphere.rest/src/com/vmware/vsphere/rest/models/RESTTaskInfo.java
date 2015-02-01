@@ -47,6 +47,10 @@ public class RESTTaskInfo extends RESTDynamicData {
 
 	// overloaded constructor
 	public RESTTaskInfo(TaskInfo mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
+
+	public void init(TaskInfo mo, String uri, String fields) {
 
 		fields = "all";
 		
@@ -143,7 +147,8 @@ public class RESTTaskInfo extends RESTDynamicData {
 			e.printStackTrace();
 		}
 	}
-
+	
+	
 	/**
 	 * @return the cancelable
 	 */

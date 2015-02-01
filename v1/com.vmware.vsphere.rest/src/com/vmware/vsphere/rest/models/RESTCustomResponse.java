@@ -11,6 +11,10 @@ public class RESTCustomResponse {
 	
 	public RESTCustomResponse(String responseStatus, String responseMessage)
 	{
+		this.init(responseStatus, responseMessage);
+	}
+	
+	public void init(String responseStatus, String responseMessage) {
 		this.setResponseStatus(responseStatus);
 		this.setResponseMessage(responseMessage);
 	}

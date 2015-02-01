@@ -28,7 +28,10 @@ public class RESTResourcePool extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTResourcePool(ResourcePool mo, String uri, String fields) {
-
+		this.init(mo, uri, fields);
+	}
+	
+	public void init(ResourcePool mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		

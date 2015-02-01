@@ -30,6 +30,10 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 
 	// overloaded constructor
 	public RESTClusterComputeResource(ClusterComputeResource mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
+	
+	public void init(ClusterComputeResource mo, String uri, String fields) {
 
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();

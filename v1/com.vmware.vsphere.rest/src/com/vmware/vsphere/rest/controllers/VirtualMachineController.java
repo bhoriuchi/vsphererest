@@ -16,7 +16,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import com.vmware.vsphere.rest.models.RESTNewVirtualMachine;
 import com.vmware.vsphere.rest.models.RESTVirtualMachine;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 import com.vmware.vsphere.rest.helpers.SearchParser;
@@ -130,24 +129,4 @@ public class VirtualMachineController {
 		
 		return null;
 	}
-	
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public RESTNewVirtualMachine postEntity(@Context HttpHeaders headers,
-			@PathParam("viServer") String viServer, RESTNewVirtualMachine newvm) {
-	
-		
-		ViConnection vi = new ViConnection(headers, viServer);
-		ServiceInstance si = vi.getServiceInstance();
-		String rootFolder = si.getRootFolder().getMOR().getVal();
-		HostSystem hst = (HostSystem) vi.getEntity("HostSystem", newvm.getHost());
-		hst.getParent().getMOR().getType();
-		
-		if (newvm.getFolder() == null) { newvm.setFolder(rootFolder); }
-		
-		
-		return new RESTNewVirtualMachine();
-	}
-
 }

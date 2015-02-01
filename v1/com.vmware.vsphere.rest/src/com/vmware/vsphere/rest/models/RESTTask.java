@@ -17,7 +17,10 @@ public class RESTTask extends RESTExtensibleManagedObject {
 
 	// overloaded constructor
 	public RESTTask(Task mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(Task mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -51,7 +54,7 @@ public class RESTTask extends RESTExtensibleManagedObject {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * @return the info
 	 */

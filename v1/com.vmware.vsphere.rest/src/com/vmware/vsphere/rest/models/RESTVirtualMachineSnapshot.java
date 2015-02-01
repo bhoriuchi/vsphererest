@@ -19,7 +19,10 @@ public class RESTVirtualMachineSnapshot extends RESTExtensibleManagedObject {
 
 	// overloaded constructor
 	public RESTVirtualMachineSnapshot(VirtualMachineSnapshot mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(VirtualMachineSnapshot mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -61,7 +64,7 @@ public class RESTVirtualMachineSnapshot extends RESTExtensibleManagedObject {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * @return the childSnapshot
 	 */

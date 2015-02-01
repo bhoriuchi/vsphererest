@@ -19,6 +19,10 @@ public class RESTHostDatastoreBrowser extends RESTManagedObject {
 
 	// overloaded constructor
 	public RESTHostDatastoreBrowser(HostDatastoreBrowser mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
+
+	public void init(HostDatastoreBrowser mo, String uri, String fields) {
 
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
@@ -48,8 +52,6 @@ public class RESTHostDatastoreBrowser extends RESTManagedObject {
 			e.printStackTrace();
 		}
 	}
-
-
 	/**
 	 * @return the datastore
 	 */

@@ -14,7 +14,10 @@ public class RESTEnvironmentBrowser extends RESTManagedObject {
 
 	// overloaded constructor
 	public RESTEnvironmentBrowser(EnvironmentBrowser mo, String uri, String fields) {
-
+		this.init(mo, uri, fields);
+	}
+	
+	public void init(EnvironmentBrowser mo, String uri, String fields)  {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		

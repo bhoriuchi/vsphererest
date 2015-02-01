@@ -27,7 +27,10 @@ public class RESTComputeResource extends RESTManagedEntity {
 
 	// overloaded constructor
 	public RESTComputeResource(ComputeResource mo, String uri, String fields) {
+		this.init(mo, uri, fields);
+	}
 
+	public void init(ComputeResource mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
@@ -125,8 +128,6 @@ public class RESTComputeResource extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-
-
 	
 
 	/**

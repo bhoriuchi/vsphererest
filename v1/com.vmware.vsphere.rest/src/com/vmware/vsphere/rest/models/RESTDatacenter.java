@@ -14,8 +14,10 @@ import com.vmware.vim25.DuplicateName;
 import com.vmware.vim25.InvalidName;
 import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.RuntimeFault;
+import com.vmware.vim25.mo.ClusterComputeResource;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Datastore;
+import com.vmware.vim25.mo.DistributedVirtualPortgroup;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.ManagedEntity;
@@ -23,6 +25,7 @@ import com.vmware.vim25.mo.Network;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
+import com.vmware.vim25.mo.VmwareDistributedVirtualSwitch;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
@@ -346,28 +349,42 @@ public class RESTDatacenter extends RESTManagedEntity {
 						.getDatastoreFolder().getChildEntity(),
 						Datastore.class, RESTDatastore.class, search, thisUri,
 						fieldStr, position, start, results, true);
-
 			} else if (childType.toLowerCase().equals("hostsystem")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getHostFolder().getChildEntity(), HostSystem.class,
 						RESTHostSystem.class, search, thisUri, fieldStr,
 						position, start, results, true);
+			} else if (childType.toLowerCase().equals("clustercomputeresource")) {
 
+				return new ManagedObjectReferenceArray().getObjectArray(mo
+						.getHostFolder().getChildEntity(), ClusterComputeResource.class,
+						RESTClusterComputeResource.class, search, thisUri, fieldStr,
+						position, start, results, false);
 			} else if (childType.toLowerCase().equals("network")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getNetworkFolder().getChildEntity(), Network.class,
 						RESTNetwork.class, search, thisUri, fieldStr, position,
 						start, results, true);
+			} else if (childType.toLowerCase().equals("distributedvirtualportgroup")) {
 
+				return new ManagedObjectReferenceArray().getObjectArray(mo
+						.getNetworkFolder().getChildEntity(), DistributedVirtualPortgroup.class,
+						RESTDistributedVirtualPortgroup.class, search, thisUri, fieldStr, position,
+						start, results, true);
+			} else if (childType.toLowerCase().equals("vmwaredistributedvirtualswitch")) {
+
+				return new ManagedObjectReferenceArray().getObjectArray(mo
+						.getNetworkFolder().getChildEntity(), VmwareDistributedVirtualSwitch.class,
+						RESTVmwareDistributedVirtualSwitch.class, search, thisUri, fieldStr, position,
+						start, results, true);
 			} else if (childType.toLowerCase().equals("virtualmachine")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getVmFolder().getChildEntity(), VirtualMachine.class,
 						RESTVirtualMachine.class, search, thisUri, fieldStr,
 						position, start, results, true);
-
 			}
 
 		} catch (NullPointerException e) {
