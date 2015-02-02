@@ -202,7 +202,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 	}
 
 	public Response create(String viServer, HttpHeaders headers, String fields,
-			String thisUri, RESTRequestBody body) {
+			String thisUri, String id, String childTypeName, RESTRequestBody body) {
 
 		ViConnection vi = new ViConnection(headers, viServer);
 		ServiceInstance si = vi.getServiceInstance();
@@ -246,6 +246,24 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
+	
+	
+	public Response createChild(String viServer, HttpHeaders headers, String fields,
+			String thisUri, String id, String childTypeName, RESTRequestBody body) {
+
+		ViConnection vi = new ViConnection(headers, viServer);
+		ServiceInstance si = vi.getServiceInstance();
+		Folder rootFolder = si.getRootFolder();
+
+		
+		
+		return null;
+	}
+	
+	
+	
+	
+	
 	public Response update(String viServer, HttpHeaders headers, String fields,
 			String thisUri, String id, RESTRequestBody body) {
 
