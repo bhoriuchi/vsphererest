@@ -50,7 +50,9 @@ public class RESTDatacenter extends RESTManagedEntity {
 		this.init(mo, uri, fields);
 	}
 
-	// function to initialize the object
+	/*
+	 * initialize the object
+	 */
 	public void init(Datacenter mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
@@ -156,7 +158,9 @@ public class RESTDatacenter extends RESTManagedEntity {
 		}
 	}
 
-	// get all objects
+	/*
+	 * get all objects of this type
+	 */
 	public List<Object> getAll(String viServer, HttpHeaders headers,
 			String search, String fieldStr, String thisUri, int start,
 			int position, int results) {
@@ -178,9 +182,12 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
+	/*
+	 * get a specific object of this type by id
+	 */
 	public RESTDatacenter getById(String viServer, HttpHeaders headers,
 			String fieldStr, String thisUri, String id) {
-
+		
 		try {
 
 			// Get the entity that matches the id
@@ -201,8 +208,11 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
+	/*
+	 * create a new object of this type
+	 */
 	public Response create(String viServer, HttpHeaders headers, String fields,
-			String thisUri, String id, String childTypeName, RESTRequestBody body) {
+			String thisUri, RESTRequestBody body) {
 
 		ViConnection vi = new ViConnection(headers, viServer);
 		ServiceInstance si = vi.getServiceInstance();
@@ -247,23 +257,9 @@ public class RESTDatacenter extends RESTManagedEntity {
 	}
 
 	
-	
-	public Response createChild(String viServer, HttpHeaders headers, String fields,
-			String thisUri, String id, String childTypeName, RESTRequestBody body) {
-
-		ViConnection vi = new ViConnection(headers, viServer);
-		ServiceInstance si = vi.getServiceInstance();
-		Folder rootFolder = si.getRootFolder();
-
-		
-		
-		return null;
-	}
-	
-	
-	
-	
-	
+	/*
+	 * update this object
+	 */
 	public Response update(String viServer, HttpHeaders headers, String fields,
 			String thisUri, String id, RESTRequestBody body) {
 
@@ -309,6 +305,9 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
+	/*
+	 * remove this object
+	 */
 	public Response remove(String viServer, HttpHeaders headers, String fields,
 			String thisUri, String id) {
 		try {
@@ -344,6 +343,9 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
+	/*
+	 * get this objects children
+	 */
 	public List<Object> getChildren(String viServer, HttpHeaders headers,
 			String search, String fieldStr, String thisUri, String id,
 			String childType, int start, int position, int results) {
@@ -422,6 +424,35 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
+	/*
+	 * create a child object of this type
+	 */
+	public Response createChild(String viServer, HttpHeaders headers, String fields,
+			String thisUri, String id, String childType, RESTRequestBody body) {
+
+		ViConnection vi = new ViConnection(headers, viServer);
+		ServiceInstance si = vi.getServiceInstance();
+		Folder rootFolder = si.getRootFolder();
+
+		
+		
+		return null;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * @return the configuration
 	 */

@@ -3,8 +3,6 @@ package com.vmware.vsphere.rest.controllers;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -24,14 +22,13 @@ import javax.ws.rs.core.UriInfo;
 
 import org.reflections.Reflections;
 
+import com.vmware.vsphere.rest.models.RESTCustomResponse;
 import com.vmware.vsphere.rest.models.RESTManagedObject;
 import com.vmware.vsphere.rest.models.RESTRequestBody;
 import com.hubspot.jackson.jaxrs.PropertyFiltering;
 
 /*
- * Generic Object type controller. This will only work for objects that do not have 
- * fields that point to a managed object reference as MORs will throw an infinite
- * recursion fault most of the time
+ * Generic Object type controller
  */
 @Path("/{viServer}/{objectType}s")
 public class ManagedObjectController {
@@ -58,7 +55,139 @@ public class ManagedObjectController {
 			@DefaultValue("") @QueryParam("search") String search,
 			@QueryParam("fields") String fields) {
 
-		System.out.println("getAll");
+		return this.getAllEx(viServer, headers, fields, search, objectType,
+				start, results);
+	}
+
+	/*
+	 * Get a single RESTManagedObject by id
+	 */
+	@Path("{id}")
+	@GET
+	@PropertyFiltering(using = "fields", defaults = defaults)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getEntityById(@Context HttpHeaders headers,
+			@PathParam("viServer") String viServer,
+			@PathParam("objectType") String objectType,
+			@PathParam("childType") String childType,
+			@PathParam("id") String id,
+			@DefaultValue("0") @QueryParam("start") int start,
+			@DefaultValue("50") @QueryParam("results") int results,
+			@DefaultValue("") @QueryParam("search") String search,
+			@QueryParam("fields") String fields) {
+
+		return this.getEntityByIdEx(viServer, headers, id, fields, search,
+				objectType, childType, start, results);
+	}
+
+	/*
+	 * Get the children of a RESTManagedObject
+	 */
+	@Path("{id}/{childType}s")
+	@GET
+	@PropertyFiltering(using = "fields", defaults = defaults)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getChildrenById(@Context HttpHeaders headers,
+			@PathParam("viServer") String viServer,
+			@PathParam("objectType") String objectType,
+			@PathParam("childType") String childType,
+			@PathParam("id") String id,
+			@DefaultValue("0") @QueryParam("start") int start,
+			@DefaultValue("50") @QueryParam("results") int results,
+			@DefaultValue("") @QueryParam("search") String search,
+			@QueryParam("fields") String fields) {
+
+		return this.getEntityByIdEx(viServer, headers, id, fields, search,
+				objectType, null, start, results);
+	}
+
+	/*
+	 * Create a new RESTManagedObject
+	 */
+	@POST
+	@PropertyFiltering(using = "fields", defaults = defaults)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postEntity(@Context HttpHeaders headers,
+			@PathParam("viServer") String viServer,
+			@PathParam("objectType") String objectType,
+			@PathParam("childType") String childType,
+			@PathParam("id") String id, @QueryParam("fields") String fields,
+			RESTRequestBody body) {
+
+		return this.postEntityEx(viServer, headers, null, fields, objectType,
+				null, body);
+	}
+
+	/*
+	 * Create a new RESTManagedObject child
+	 */
+	@Path("{id}/{childType}s")
+	@POST
+	@PropertyFiltering(using = "fields", defaults = defaults)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response postChild(@Context HttpHeaders headers,
+			@PathParam("viServer") String viServer,
+			@PathParam("objectType") String objectType,
+			@PathParam("childType") String childType,
+			@PathParam("id") String id, @QueryParam("fields") String fields,
+			RESTRequestBody body) {
+
+		return this.postEntityEx(viServer, headers, id, fields, objectType,
+				childType, body);
+	}
+
+	/*
+	 * Modify a RESTManagedObject
+	 */
+	@Path("{id}")
+	@PUT
+	@PropertyFiltering(using = "fields", defaults = "id,name,responseStatus,responseMessage")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response putEntity(@Context HttpHeaders headers,
+			@PathParam("viServer") String viServer,
+			@PathParam("objectType") String objectType,
+			@PathParam("childType") String childType,
+			@PathParam("id") String id, @QueryParam("fields") String fields,
+			RESTRequestBody body) {
+
+		return this.putEntityEx(viServer, headers, id, fields, objectType, childType, body);
+	}
+
+	
+	
+	/*
+	 * Remove a RESTManagedObject
+	 */
+	@Path("{id}")
+	@DELETE
+	@PropertyFiltering(using = "fields", defaults = defaults)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response removeEntity(@Context HttpHeaders headers,
+			@PathParam("viServer") String viServer,
+			@PathParam("objectType") String objectType,
+			@PathParam("id") String id,
+			@QueryParam("fields") String fields) {
+
+		return this.removeEntityEx(viServer, headers, id, fields, objectType);
+
+	}
+	
+	
+
+	
+
+	// private functions. these have been separated out for versioning and to limit the amount of redundant code
+
+	/*
+	 * function that gets all entities
+	 */
+	private Response getAllEx(String viServer, HttpHeaders headers,
+			String fields, String search, String objectType, int start,
+			int results) {
 
 		// initialize variables
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
@@ -73,85 +202,85 @@ public class ManagedObjectController {
 			results = this.maxResults;
 		}
 
-		try {
+		Class<?> params[] = { String.class, HttpHeaders.class, String.class,
+				String.class, String.class, int.class, int.class, int.class };
+		Object args[] = { viServer, headers, search, fieldStr, thisUri, start,
+				position, results };
 
-			// get all classes from com.vmware.vsphere.rest.models
-			Reflections reflections = new Reflections(
-					"com.vmware.vsphere.rest.models");
-			Set<Class<? extends RESTManagedObject>> allClasses = reflections
-					.getSubTypesOf(RESTManagedObject.class);
+		// call the getAll function
+		Object moList = this.callMethodByName(objectType, "getAll", params,
+				args);
 
-			// loop through each of the classes
-			for (Class<?> c : allClasses) {
-
-				// if a class with the name REST<objectType> is found then
-				// attempt to use that
-				if (c.getSimpleName().toLowerCase()
-						.equals("rest" + objectType.toLowerCase())) {
-
-					// create parameter/argument array
-					Class<?> params[] = { String.class, HttpHeaders.class,
-							String.class, String.class, String.class,
-							int.class, int.class, int.class };
-					Object args[] = { viServer, headers, search, fieldStr,
-							thisUri, start, position, results };
-
-					// create a new instance of the object and call its getAll
-					// method
-					Object o = c.newInstance();
-					Method m = c.getMethod("getAll", params);
-					Object moList = m.invoke(o, args);
-
-					// if the response is not null build an ok response
-					if (moList != null) {
-						return Response.ok().entity(moList).build();
-					} else {
-						return null;
-					}
-				}
-			}
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		// return the results
+		if (moList != null) {
+			return Response.ok().entity(moList).build();
 		}
 
 		return null;
 	}
 
 	/*
-	 * Get a single RESTManagedObject by id
+	 * function that gets entities by their id as well as child entities
 	 */
-	@Path("{id}{childType:(/[^/]+?)?}")
-	@GET
-	@PropertyFiltering(using = "fields", defaults = defaults)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getEntityById(@Context HttpHeaders headers,
-			@PathParam("viServer") String viServer,
-			@PathParam("objectType") String objectType,
-			@PathParam("childType") String childType,
-			@PathParam("id") String id,
-			@DefaultValue("0") @QueryParam("start") int start,
-			@DefaultValue("50") @QueryParam("results") int results,
-			@DefaultValue("") @QueryParam("search") String search,
-			@QueryParam("fields") String fields) {
+	private Response getEntityByIdEx(String viServer, HttpHeaders headers,
+			String id, String fields, String search, String objectType,
+			String childType, int start, int results) {
+
+		// initialize variables
+		String thisUri = uri.getBaseUri().toString() + viServer + "/";
+		int position = 0;
+		String fieldStr = defaults;
+		if (fields != null) {
+			fieldStr = fields;
+		}
+
+		// determine the result set
+		if (results > this.maxResults) {
+			results = this.maxResults;
+		}
+
+		Class<?> params[] = { String.class, HttpHeaders.class, String.class,
+				String.class, String.class };
+		Object args[] = { viServer, headers, fieldStr, thisUri, id };
+
+		// get the object by id
+		Object mo = this.callMethodByName(objectType, "getById", params, args);
+
+		// if the response is not null build an ok response
+		if (mo != null) {
+
+			// if the request was for a child type, try to get the
+			// children
+			if (childType != null) {
+
+				// set params/args for getChildren method
+				Class<?> childParams[] = { String.class, HttpHeaders.class,
+						String.class, String.class, String.class, String.class,
+						String.class, int.class, int.class, int.class };
+				Object childArgs[] = { viServer, headers, search, fieldStr,
+						thisUri, id, childType, start, position, results };
+
+				// get the children
+				Object moList = this.callMethodByName(objectType,
+						"getChildren", childParams, childArgs);
+
+				// if the response is not null build an ok response
+				if (moList != null) {
+					return Response.ok().entity(moList).build();
+				}
+			} else {
+				return Response.ok().entity(mo).build();
+			}
+		}
+		return null;
+	}
+
+	/*
+	 * function to create a new entity
+	 */
+	private Response postEntityEx(String viServer, HttpHeaders headers,
+			String id, String fields, String objectType, String childType,
+			RESTRequestBody body) {
 
 		// initialize variables
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
@@ -160,6 +289,107 @@ public class ManagedObjectController {
 			fieldStr = fields;
 		}
 
+		if (id != null && childType != null) {
+
+			// create parameter/argument array
+			Class<?> params[] = { String.class, HttpHeaders.class,
+					String.class, String.class, String.class, String.class,
+					RESTRequestBody.class };
+			Object args[] = { viServer, headers, fieldStr, thisUri, id,
+					childType, body };
+
+			// call the create method
+			Object r = this.callMethodByName(objectType, "createChild", params,
+					args);
+			if (r != null) {
+				return (Response) r;
+			}
+		}
+
+		else {
+
+			// create parameter/argument array
+			Class<?> params[] = { String.class, HttpHeaders.class,
+					String.class, String.class, RESTRequestBody.class };
+			Object args[] = { viServer, headers, fieldStr, thisUri, body };
+
+			// call the create method
+			Object r = this
+					.callMethodByName(objectType, "create", params, args);
+			if (r != null) {
+				return (Response) r;
+			}
+		}
+
+		return null;
+	}
+	
+	/*
+	 * function to update an entitiy
+	 */
+	private Response putEntityEx(String viServer, HttpHeaders headers,
+			String id, String fields, String objectType, String childType,
+			RESTRequestBody body) {
+		
+		// initialize variables
+		String thisUri = uri.getBaseUri().toString() + viServer + "/";
+		String fieldStr = defaults;
+		if (fields != null) {
+			fieldStr = fields;
+		}
+		
+		Class<?> params[] = { String.class, HttpHeaders.class,
+				String.class, String.class, String.class,
+				RESTRequestBody.class };
+		Object args[] = { viServer, headers, fieldStr, thisUri, id,
+				body };
+		
+		// call the create method
+		Object r = this.callMethodByName(objectType, "update", params,
+				args);
+		if (r != null) {
+			return (Response) r;
+		}
+
+		return null;
+		
+	}
+
+	
+	
+	
+	/*
+	 * remove an entity
+	 */
+	private Response removeEntityEx(String viServer, HttpHeaders headers,
+			String id, String fields, String objectType) {
+		// initialize variables
+		String thisUri = uri.getBaseUri().toString() + viServer + "/";
+		String fieldStr = defaults;
+		if (fields != null) {
+			fieldStr = fields;
+		}
+
+		// create parameter/argument array
+		Class<?> params[] = { String.class, HttpHeaders.class,
+				String.class, String.class, String.class };
+		Object args[] = { viServer, headers, fieldStr, thisUri, id };
+		
+		// call the create method
+		Object r = this.callMethodByName(objectType, "remove", params,
+				args);
+		if (r != null) {
+			return (Response) r;
+		}
+		
+		return null;
+	}
+	
+	/*
+	 * call a method by its name with parameters using reflections
+	 */
+	private Object callMethodByName(String objectType, String methodName,
+			Class<?> params[], Object args[]) {
 		try {
 
 			// get all classes from com.vmware.vsphere.rest.models
@@ -175,164 +405,15 @@ public class ManagedObjectController {
 				// attempt to use that
 				if (c.getSimpleName().toLowerCase()
 						.equals("rest" + objectType.toLowerCase())) {
-
-					// create parameter/argument array
-					Class<?> params[] = { String.class, HttpHeaders.class,
-							String.class, String.class, String.class };
-					Object args[] = { viServer, headers, fieldStr, thisUri, id };
 
 					// create a new instance of the object and call its getById
 					// method
 					Object o = c.newInstance();
-					Method m = c.getMethod("getById", params);
-					Object mo = m.invoke(o, args);
-
-					// if the response is not null build an ok response
-					if (mo != null) {
-						
-						// if the request was for a child type, try to get the children
-						if (childType != null) {
-							
-							// use regex to extract the type
-							Pattern pattern = Pattern.compile("/(\\w+)s");
-							Matcher matcher = pattern.matcher(childType);
-							if (matcher.find())
-							{
-							
-								int position = 0;
-								
-								// set params/args for getChildren method
-								Class<?> childParams[] = { String.class, HttpHeaders.class,
-										String.class, String.class, String.class, String.class,
-										String.class, int.class, int.class, int.class };
-								Object childArgs[] = { viServer, headers, search, fieldStr, thisUri, id,
-										matcher.group(1), start, position, results };
-								
-								// call getChildren on mo
-								Method childMethod = c.getMethod("getChildren", childParams);
-								Object moList = childMethod.invoke(mo, childArgs);
-								
-								// if the response is not null build an ok response
-								if (moList != null) {
-									return Response.ok().entity(moList).build();
-								} else {
-									return null;
-								}
-							}
-							else {
-								return null;
-							}
-							
-						}
-						else {
-							return Response.ok().entity(mo).build();
-						}
-					} else {
-						return null;
-					}
-				}
-			}
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return null;
-	}
-
-	/*
-	 * Create a new RESTManagedObject
-	 */
-	@Path("{id:([^/]+?)?}{childType:(/[^/]+?)?}")
-	@POST
-	@PropertyFiltering(using = "fields", defaults = defaults)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response postEntity(@Context HttpHeaders headers,
-			@PathParam("viServer") String viServer,
-			@PathParam("objectType") String objectType, 
-			@PathParam("childType") String childType,
-			@PathParam("id") String id,
-			RESTRequestBody body) {
-
-		// initialize variables
-		String thisUri = uri.getBaseUri().toString() + viServer + "/";
-		String fields = defaults;
-		
-		String methodName = "create";
-		String childTypeName = "";
-		String objectId = "";
-		
-		if (id != null && childType != null) {
-
-			// use regex to extract the type
-			Pattern pattern = Pattern.compile("/(\\w+)s");
-			Matcher matcher = pattern.matcher(childType);
-			if (matcher.find())
-			{
-				objectId = id;
-				childTypeName = matcher.group(1);
-				methodName = "createChild";
-				System.out.println(id + ":" + childTypeName);
-				
-			}
-		}
-
-		try {
-
-			// get all classes from com.vmware.vsphere.rest.models
-			Reflections reflections = new Reflections(
-					"com.vmware.vsphere.rest.models");
-			Set<Class<? extends RESTManagedObject>> allClasses = reflections
-					.getSubTypesOf(RESTManagedObject.class);
-
-			// loop through each of the classes
-			for (Class<?> c : allClasses) {
-
-				// if a class with the name REST<objectType> is found then
-				// attempt to use that
-				if (c.getSimpleName().toLowerCase()
-						.equals("rest" + objectType.toLowerCase())) {
-
-					
-					
-					// create parameter/argument array
-					Class<?> params[] = { String.class, HttpHeaders.class,
-							String.class, String.class, String.class, String.class, RESTRequestBody.class };
-					Object args[] = { viServer, headers, fields, thisUri, objectId, childTypeName, body };
-
-					// create a new instance of the object and call its create
-					// method
-					Object o = c.newInstance();
 					Method m = c.getMethod(methodName, params);
-					Object r = m.invoke(o, args);
-
-					// if the response is not null build an ok response
-					if (r != null) {
-						return (Response) r;
-					} else {
-						return null;
-					}
+					return m.invoke(o, args);
 				}
 			}
+
 		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -343,8 +424,10 @@ public class ManagedObjectController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return Response
+					.status(405)
+					.entity(new RESTCustomResponse("notAllowed",
+							"this method is not allowed for the current object type")).build();
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -355,164 +438,8 @@ public class ManagedObjectController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
 		return null;
-	}
-
-	/*
-	 * Modify a RESTManagedObject
-	 */
-	@Path("{id}")
-	@PUT
-	@PropertyFiltering(using = "fields", defaults = "id,name,responseStatus,responseMessage")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response putEntity(@Context HttpHeaders headers,
-			@PathParam("id") String id,
-			@PathParam("objectType") String objectType,
-			@PathParam("viServer") String viServer, RESTRequestBody body) {
-
-		// initialize variables
-		String thisUri = uri.getBaseUri().toString() + viServer + "/";
-		String fieldStr = defaults;
-		try {
-
-			// get all classes from com.vmware.vsphere.rest.models
-			Reflections reflections = new Reflections(
-					"com.vmware.vsphere.rest.models");
-			Set<Class<? extends RESTManagedObject>> allClasses = reflections
-					.getSubTypesOf(RESTManagedObject.class);
-
-			// loop through each of the classes
-			for (Class<?> c : allClasses) {
-
-				// if a class with the name REST<objectType> is found then
-				// attempt to use that
-				if (c.getSimpleName().toLowerCase()
-						.equals("rest" + objectType.toLowerCase())) {
-
-					// create parameter/argument array
-					Class<?> params[] = { String.class, HttpHeaders.class,
-							String.class, String.class, String.class,
-							RESTRequestBody.class };
-					Object args[] = { viServer, headers, fieldStr, thisUri, id,
-							body };
-
-					// create a new instance of the object and call its update
-					// method
-					Object o = c.newInstance();
-					Method m = c.getMethod("update", params);
-					Object r = m.invoke(o, args);
-
-					// if the response is not null build an ok response
-					if (r != null) {
-						return (Response) r;
-					} else {
-						return null;
-					}
-				}
-			}
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-
-	}
-
-	/*
-	 * Remove a RESTManagedObject
-	 */
-	@Path("{id}")
-	@DELETE
-	@PropertyFiltering(using = "fields", defaults = defaults)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response deleteEntity(@Context HttpHeaders headers,
-			@PathParam("id") String id,
-			@PathParam("objectType") String objectType,
-			@PathParam("viServer") String viServer) {
-
-		// initialize variables
-		String thisUri = uri.getBaseUri().toString() + viServer + "/";
-		String fieldStr = defaults;
-
-		try {
-
-			// get all classes from com.vmware.vsphere.rest.models
-			Reflections reflections = new Reflections(
-					"com.vmware.vsphere.rest.models");
-			Set<Class<? extends RESTManagedObject>> allClasses = reflections
-					.getSubTypesOf(RESTManagedObject.class);
-
-			// loop through each of the classes
-			for (Class<?> c : allClasses) {
-
-				// if a class with the name REST<objectType> is found then
-				// attempt to use that
-				if (c.getSimpleName().toLowerCase()
-						.equals("rest" + objectType.toLowerCase())) {
-
-					// create parameter/argument array
-					Class<?> params[] = { String.class, HttpHeaders.class,
-							String.class, String.class, String.class };
-					Object args[] = { viServer, headers, fieldStr, thisUri, id };
-
-					// create a new instance of the object and call its remove
-					// method
-					Object o = c.newInstance();
-					Method m = c.getMethod("remove", params);
-					Object r = m.invoke(o, args);
-
-					// if the response is not null build an ok response
-					if (r != null) {
-						return (Response) r;
-					} else {
-						return null;
-					}
-				}
-			}
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-
 	}
 
 	/*

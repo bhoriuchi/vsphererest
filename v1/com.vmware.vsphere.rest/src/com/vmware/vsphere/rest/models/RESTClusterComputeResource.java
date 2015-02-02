@@ -1,18 +1,31 @@
 package com.vmware.vsphere.rest.models;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.util.List;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
 import com.vmware.vim25.ClusterActionHistory;
 import com.vmware.vim25.ClusterConfigInfo;
+import com.vmware.vim25.ClusterConfigSpec;
 import com.vmware.vim25.ClusterDrsFaults;
 import com.vmware.vim25.ClusterDrsMigration;
 import com.vmware.vim25.ClusterDrsRecommendation;
 import com.vmware.vim25.ClusterRecommendation;
+import com.vmware.vim25.DuplicateName;
+import com.vmware.vim25.InvalidName;
+import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.ClusterComputeResource;
+import com.vmware.vim25.mo.Datacenter;
+import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
+import com.vmware.vsphere.rest.helpers.ViConnection;
 
 public class RESTClusterComputeResource extends RESTComputeResource {
 	
@@ -154,6 +167,151 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 		}
 	}
 
+	
+	
+	/*
+	 * get all objects of this type
+	 */
+	public List<Object> getAll(String viServer, HttpHeaders headers,
+			String search, String fieldStr, String thisUri, int start,
+			int position, int results) {
+
+		try {
+
+			ManagedEntity[] e = new ViConnection().getEntities("ClusterComputeResource",
+					headers, viServer);
+
+			return new ManagedObjectReferenceArray().getObjectArray(e,
+					ClusterComputeResource.class, RESTClusterComputeResource.class, search, thisUri,
+					fieldStr, position, start, results, false);
+
+		} catch (NullPointerException e) {
+			// TODO Auto-generated catch block
+			// e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	/*
+	 * get a specific object of this type by id
+	 */
+	public RESTClusterComputeResource getById(String viServer, HttpHeaders headers,
+			String fieldStr, String thisUri, String id) {
+		
+		try {
+
+			// Get the entity that matches the id
+			ManagedEntity m = new ViConnection().getEntity("ClusterComputeResource", id,
+					headers, viServer);
+
+			if (m != null) {
+				return new RESTClusterComputeResource((ClusterComputeResource) m, thisUri, fieldStr);
+			} else {
+				return null;
+			}
+
+		} catch (NullPointerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+	
+	
+	/*
+	 * create a new object of this type
+	 */
+	public Response create(String viServer, HttpHeaders headers, String fields,
+			String thisUri, RESTRequestBody body) {
+
+		try {
+
+			// check for name 
+			if (body.getName() == null) {
+				return Response
+						.status(400)
+						.entity(new RESTCustomResponse("badRequest",
+								"name not specified")).build();
+			} 
+			// check for datacenter
+			else if (body.getDatacenter() == null) {
+				return Response
+						.status(400)
+						.entity(new RESTCustomResponse("badRequest",
+								"datacenter not specified")).build();
+			}
+			
+			// create the object
+			else {
+				
+				// look for the datacenter
+				ManagedEntity m = new ViConnection().getEntity("Datacenter", body.getDatacenter(),
+						headers, viServer);
+				
+				// if the datacenter was found
+				if (m != null) {
+					
+					// create an empty spec if one doesnt exist
+					if (body.getSpec() == null) {
+						body.setSpec(new ClusterConfigSpec());
+					}
+					
+					Datacenter dc = (Datacenter) m;
+					
+					
+					ClusterComputeResource mo = dc.getHostFolder().createCluster(body.getName(), (ClusterConfigSpec) body.getSpec());
+					URI uri = new URI(thisUri + mo.getMOR().getType().toLowerCase()
+							+ "s/" + mo.getMOR().getVal());
+					return Response.created(uri)
+							.entity(new RESTClusterComputeResource(mo, thisUri, fields))
+							.build();
+				}
+			}
+		} catch (InvalidName e) {
+			return Response
+					.status(400)
+					.entity(new RESTCustomResponse("invalidName", body
+							.getName() + " is not a valid name")).build();
+		} catch (DuplicateName e) {
+			return Response
+					.status(400)
+					.entity(new RESTCustomResponse("duplicateName", body
+							.getName() + " already exists")).build();
+		} catch (RuntimeFault e) {
+			// TODO Auto-generated catch block
+			// e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	
+	/*
+	 * update this object
+	 */
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * @return the actionHistory
 	 */
