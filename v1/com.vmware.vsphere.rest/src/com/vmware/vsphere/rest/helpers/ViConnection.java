@@ -9,9 +9,11 @@ import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
 
+import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.ServerConnection;
 import com.vmware.vim25.mo.ServiceInstance;
 
 public class ViConnection {
@@ -19,118 +21,275 @@ public class ViConnection {
 	private HttpHeaders headers;
 	private String viServer;
 	private ServiceInstance si;
+	private ServerConnection sc;
+	private String sdk;
+	private String SessionKey;
 	private static String basic = "Basic ";
-	
-	public ViConnection() { }
-	
-	public ViConnection(HttpHeaders headers, String viServer) {
-		this.headers = headers;
-		this.viServer = viServer;
-	}
-	
-	public ServiceInstance getServiceInstance() {
-		
-		// check input
-		if (this.viServer == null || this.viServer == "") { return null; }
-		if (this.headers == null || (this.headers instanceof HttpHeaders) == false) {return null; }
-		
-		// format the SDK string
-		String sdk = "https://" + this.viServer + "/sdk";
 
-		// get the basic authentication header
-		List<String> authHeaders = this.headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
-		String base64Credentials = null;
-		ServiceInstance si = null;
-		
-		for (String header : authHeaders) {
-			if (header.indexOf(basic) != -1) {
-				base64Credentials = header.substring(header.indexOf(basic) + basic.length());
-				break;
-			}
-		}
-		
-		// check if basic authentication was found
-		if (base64Credentials == null) { return null; }
-		
-		// decode header into its parts
-		Decoder decoder = Base64.getDecoder();
-        String credentials = new String(decoder.decode(base64Credentials));
-        final String[] values = credentials.split(":",2);
-
-        // create a new service instance
-        try {
-			si = new ServiceInstance(new URL(sdk),values[0], values[1], true);
-		} catch (RemoteException | MalformedURLException e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		}
-        
-        this.si = si;
-        
-		return si;
+	// constructor
+	public ViConnection() {
 	}
-	
-	public ServiceInstance getServiceInstance(HttpHeaders headers, String viServer) {
-		this.headers = headers;
-		this.viServer = viServer;
+
+	// overloaded constructor
+	public ViConnection(HttpHeaders headers, String sessionKey, String viServer) {
+		this.setHeaders(headers);
+		this.setViServer(viServer);
+		this.setSessionKey(sessionKey);
+		this.setSdk("https://" + viServer + "/sdk");
+	}
+
+	// overloaded getServiceInstance
+	public ServiceInstance getServiceInstance(HttpHeaders headers,
+			String sessionKey, String viServer) {
+		this.setHeaders(headers);
+		this.setViServer(viServer);
+		this.setSessionKey(sessionKey);
+		this.setSdk("https://" + viServer + "/sdk");
 		return getServiceInstance();
 	}
-	
-	public ManagedEntity[] getEntities(String type) {
-		
-		
-		
+
+	// function that acquires a service instance
+	public ServiceInstance getServiceInstance() {
+
+		// the sdk url is always required
+		if (this.getSdk() == null || this.getSdk() == "") {
+			return null;
+		}
+
 		try {
-			Folder rootFolder = this.si.getRootFolder();
-			return new InventoryNavigator(rootFolder).searchManagedEntities(type);
-		} catch (NullPointerException | RemoteException e) {
+
+			// try to do sessionKey authentication first
+			if (this.getSessionKey() != null && this.getSessionKey() != "") {
+				String session = "vmware_soap_session=\""
+						+ this.getSessionKey() + "\"";
+				this.setSi(new ServiceInstance(new URL(this.getSdk()), session, true));
+			}
+
+			// otherwise try basic authentication
+			else {
+
+				// make sure that there are headers
+				if (this.getHeaders() == null
+						|| (this.getHeaders() instanceof HttpHeaders) == false) {
+					return null;
+				}
+
+				// get the authentication headers
+				List<String> authHeaders = this.getHeaders().getRequestHeader(
+						HttpHeaders.AUTHORIZATION);
+				String base64Credentials = null;
+
+				// find the basic authentication header
+				for (String header : authHeaders) {
+					if (header.indexOf(basic) != -1) {
+						base64Credentials = header.substring(header
+								.indexOf(basic) + basic.length());
+
+						// decode header into its parts
+						Decoder decoder = Base64.getDecoder();
+						String credentials = new String(
+								decoder.decode(base64Credentials));
+						final String[] values = credentials.split(":", 2);
+
+						// try to connect and set the service instance
+						this.setSi(new ServiceInstance(new URL(this.getSdk()), values[0],
+								values[1], true));
+						break;
+					}
+				}
+			}
+
+		} catch (MalformedURLException e1) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			e1.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return this.getSi();
+	}
+
+	// get a server connection
+	public ServerConnection getServerConnection(HttpHeaders headers,
+			String sessionKey, String viServer) {
+
+		if (this.getSi() == null) {
+			this.getServiceInstance(headers, sessionKey, viServer);
+		}
+
+		if (this.getSi() != null) {
+			ServerConnection sc = this.getSi().getServerConnection();
+			this.setSc(sc);
+			return sc;
 		}
 		return null;
 	}
-	
-	public ManagedEntity[] getEntities(String type, HttpHeaders headers, String viServer) {
-		getServiceInstance(headers, viServer);
+
+	// get all entities of a specific type
+	public ManagedEntity[] getEntities(String type) {
+
+		try {
+			Folder rootFolder = this.getSi().getRootFolder();
+			return new InventoryNavigator(rootFolder).searchManagedEntities(type);
+
+		} catch (NullPointerException | RemoteException e) {
+			// TODO Auto-generated catch block
+			// e.printStackTrace();
+		}
+		return null;
+	}
+
+	// get all entities of a specific type with all arguments
+	public ManagedEntity[] getEntities(String type, HttpHeaders headers,
+			String sessionKey, String viServer) {
+		getServiceInstance(headers, sessionKey, viServer);
 		return getEntities(type);
 	}
-	
+
+	// get a specific entity
 	public ManagedEntity getEntity(String type, String id) {
 
 		try {
-			Folder rootFolder = this.si.getRootFolder();
-			ManagedEntity[] entities = new InventoryNavigator(rootFolder).searchManagedEntities(type);
-
+			Folder rootFolder = this.getSi().getRootFolder();
+			ManagedEntity[] entities = new InventoryNavigator(rootFolder)
+					.searchManagedEntities(type);
 			for (ManagedEntity e : entities) {
 
-				if (e.getMOR().getVal().toLowerCase().equals(id.toLowerCase())) { return e; }
+				if (e.getMOR().getVal().toLowerCase().equals(id.toLowerCase())) {
+					return e;
+				}
 			}
-			
-		}  catch (NullPointerException | RemoteException e) {
+
+		} catch (NullPointerException | RemoteException e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 
 		return null;
 	}
-	
-	public ManagedEntity getEntity(String type, String id, HttpHeaders headers, String viServer) {
-		getServiceInstance(headers, viServer);
+
+	// get a specific entity with all arguments
+	public ManagedEntity getEntity(String type, String id, HttpHeaders headers,
+			String sessionKey, String viServer) {
+		getServiceInstance(headers, sessionKey, viServer);
 		return getEntity(type, id);
 	}
 	
-	public HttpHeaders getHeaders() {
-		return this.headers;
+	
+	// close a session
+	public void closeSession(boolean force) {
+		
+		try {
+			
+			if (force || this.getSessionKey() == null) {
+				
+				if (this.getSi().getSessionManager() != null) {
+					System.out.println("logging session out");
+					this.getSi().getSessionManager().logout();
+				}
+				else {
+					System.out.println("no session to log out");
+				}
+			}
+			
+		} catch (RuntimeFault e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
-	public void setHttpHeaders(HttpHeaders headers) {
+
+	/**
+	 * @return the sc
+	 */
+	public ServerConnection getSc() {
+		return sc;
+	}
+
+	/**
+	 * @param sc
+	 *            the sc to set
+	 */
+	public void setSc(ServerConnection sc) {
+		this.sc = sc;
+	}
+
+	/**
+	 * @return the si
+	 */
+	public ServiceInstance getSi() {
+		return si;
+	}
+
+	/**
+	 * @param si
+	 *            the si to set
+	 */
+	public void setSi(ServiceInstance si) {
+		this.si = si;
+	}
+
+	/**
+	 * @return the sdk
+	 */
+	public String getSdk() {
+		return sdk;
+	}
+
+	/**
+	 * @param sdk
+	 *            the sdk to set
+	 */
+	public void setSdk(String sdk) {
+		this.sdk = sdk;
+	}
+
+	/**
+	 * @return the sessionKey
+	 */
+	public String getSessionKey() {
+		return SessionKey;
+	}
+
+	/**
+	 * @param sessionKey
+	 *            the sessionKey to set
+	 */
+	public void setSessionKey(String sessionKey) {
+		SessionKey = sessionKey;
+	}
+
+	/**
+	 * @return the headers
+	 */
+	public HttpHeaders getHeaders() {
+		return headers;
+	}
+
+	/**
+	 * @param headers
+	 *            the headers to set
+	 */
+	public void setHeaders(HttpHeaders headers) {
 		this.headers = headers;
 	}
-	
+
+	/**
+	 * @return the viServer
+	 */
 	public String getViServer() {
-		return this.viServer;
+		return viServer;
 	}
+
+	/**
+	 * @param viServer
+	 *            the viServer to set
+	 */
 	public void setViServer(String viServer) {
 		this.viServer = viServer;
 	}
-	
+
 }

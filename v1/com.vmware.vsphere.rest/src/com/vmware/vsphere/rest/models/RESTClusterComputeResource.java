@@ -172,14 +172,14 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	/*
 	 * get all objects of this type
 	 */
-	public List<Object> getAll(String viServer, HttpHeaders headers,
+	public List<Object> getAll(String viServer, HttpHeaders headers, String sessionKey, 
 			String search, String fieldStr, String thisUri, int start,
 			int position, int results) {
 
 		try {
 
 			ManagedEntity[] e = new ViConnection().getEntities("ClusterComputeResource",
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			return new ManagedObjectReferenceArray().getObjectArray(e,
 					ClusterComputeResource.class, RESTClusterComputeResource.class, search, thisUri,
@@ -196,14 +196,14 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	/*
 	 * get a specific object of this type by id
 	 */
-	public RESTClusterComputeResource getById(String viServer, HttpHeaders headers,
+	public RESTClusterComputeResource getById(String viServer, HttpHeaders headers, String sessionKey, 
 			String fieldStr, String thisUri, String id) {
 		
 		try {
 
 			// Get the entity that matches the id
 			ManagedEntity m = new ViConnection().getEntity("ClusterComputeResource", id,
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			if (m != null) {
 				return new RESTClusterComputeResource((ClusterComputeResource) m, thisUri, fieldStr);
@@ -223,7 +223,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	/*
 	 * create a new object of this type
 	 */
-	public Response create(String viServer, HttpHeaders headers, String fields,
+	public Response create(String viServer, HttpHeaders headers, String sessionKey, String fields, 
 			String thisUri, RESTRequestBody body) {
 
 		try {
@@ -248,7 +248,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 				
 				// look for the datacenter
 				ManagedEntity m = new ViConnection().getEntity("Datacenter", body.getDatacenter(),
-						headers, viServer);
+						headers, sessionKey, viServer);
 				
 				// if the datacenter was found
 				if (m != null) {

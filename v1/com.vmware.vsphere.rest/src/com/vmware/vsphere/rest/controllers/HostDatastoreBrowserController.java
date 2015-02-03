@@ -33,7 +33,7 @@ public class HostDatastoreBrowserController {
 	@Produces(MediaType.APPLICATION_JSON)
 	public RESTHostDatastoreBrowser getEntityById(@Context HttpHeaders headers,
 			@PathParam("viServer") String viServer,
-			@PathParam("id") String id, @QueryParam("fields") String fields) {
+			@PathParam("id") String id, @QueryParam("sessionkey") String sessionKey, @QueryParam("fields") String fields) {
 		
 		
 		// initialize variables
@@ -47,7 +47,7 @@ public class HostDatastoreBrowserController {
 			ManagedObjectReference mor = new ManagedObjectReference();
 			mor.setType("HostDatastoreBrowser");
 			mor.setVal(id);
-			HostDatastoreBrowser m = (HostDatastoreBrowser) MorUtil.createExactManagedObject(new ViConnection().getServiceInstance(headers, viServer).getServerConnection(), mor);
+			HostDatastoreBrowser m = (HostDatastoreBrowser) MorUtil.createExactManagedObject(new ViConnection().getServiceInstance(headers, sessionKey, viServer).getServerConnection(), mor);
 
 			if (m != null) {
 

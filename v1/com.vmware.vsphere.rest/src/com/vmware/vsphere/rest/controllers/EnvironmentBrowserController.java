@@ -34,7 +34,7 @@ public class EnvironmentBrowserController {
 	@Produces(MediaType.APPLICATION_JSON)
 	public RESTEnvironmentBrowser getEntityById(@Context HttpHeaders headers,
 			@PathParam("viServer") String viServer,
-			@PathParam("id") String id, @QueryParam("fields") String fields) {
+			@PathParam("id") String id, @QueryParam("sessionkey") String sessionKey, @QueryParam("fields") String fields) {
 		
 		
 		// initialize variables
@@ -48,7 +48,7 @@ public class EnvironmentBrowserController {
 			ManagedObjectReference mor = new ManagedObjectReference();
 			mor.setType("EnvironmentBrowser");
 			mor.setVal(id);
-			EnvironmentBrowser m = (EnvironmentBrowser) MorUtil.createExactManagedObject(new ViConnection().getServiceInstance(headers, viServer).getServerConnection(), mor);
+			EnvironmentBrowser m = (EnvironmentBrowser) MorUtil.createExactManagedObject(new ViConnection().getServiceInstance(headers, sessionKey, viServer).getServerConnection(), mor);
 			
 			if (m != null) {
 

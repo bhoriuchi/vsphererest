@@ -12,6 +12,7 @@ public class RESTRequestBody {
 	private String clusterComputeResource;
 	private String reference;
 	private Object spec;
+	private String locale;
 	
 	/**
 	 * @return the name
@@ -96,5 +97,17 @@ public class RESTRequestBody {
 	 */
 	public void setSpec(Object spec) {
 		this.spec = spec;
+	}
+	/**
+	 * @return the locale
+	 */
+	public String getLocale() {
+		return locale;
+	}
+	/**
+	 * @param locale the locale to set
+	 */
+	public void setLocale(String locale) {
+		this.locale = locale;
 	}
 }

@@ -161,14 +161,14 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * get all objects of this type
 	 */
-	public List<Object> getAll(String viServer, HttpHeaders headers,
+	public List<Object> getAll(String viServer, HttpHeaders headers, String sessionKey, 
 			String search, String fieldStr, String thisUri, int start,
 			int position, int results) {
 
 		try {
 
 			ManagedEntity[] e = new ViConnection().getEntities("Datacenter",
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			return new ManagedObjectReferenceArray().getObjectArray(e,
 					Datacenter.class, RESTDatacenter.class, search, thisUri,
@@ -185,14 +185,14 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * get a specific object of this type by id
 	 */
-	public RESTDatacenter getById(String viServer, HttpHeaders headers,
+	public RESTDatacenter getById(String viServer, HttpHeaders headers, String sessionKey, 
 			String fieldStr, String thisUri, String id) {
 		
 		try {
 
 			// Get the entity that matches the id
 			ManagedEntity m = new ViConnection().getEntity("Datacenter", id,
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			if (m != null) {
 				return new RESTDatacenter((Datacenter) m, thisUri, fieldStr);
@@ -211,10 +211,10 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * create a new object of this type
 	 */
-	public Response create(String viServer, HttpHeaders headers, String fields,
+	public Response create(String viServer, HttpHeaders headers, String sessionKey, String fields,
 			String thisUri, RESTRequestBody body) {
 
-		ViConnection vi = new ViConnection(headers, viServer);
+		ViConnection vi = new ViConnection(headers, sessionKey, viServer);
 		ServiceInstance si = vi.getServiceInstance();
 		Folder rootFolder = si.getRootFolder();
 
@@ -260,14 +260,14 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * update this object
 	 */
-	public Response update(String viServer, HttpHeaders headers, String fields,
+	public Response update(String viServer, HttpHeaders headers, String sessionKey, String fields,
 			String thisUri, String id, RESTRequestBody body) {
 
 		try {
 
 			// Get the entity that matches the id
 			ManagedEntity m = new ViConnection().getEntity("Datacenter", id,
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			if (m != null) {
 
@@ -308,13 +308,13 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * remove this object
 	 */
-	public Response remove(String viServer, HttpHeaders headers, String fields,
+	public Response remove(String viServer, HttpHeaders headers, String sessionKey, String fields,
 			String thisUri, String id) {
 		try {
 
 			// Get the entity that matches the id
 			ManagedEntity m = new ViConnection().getEntity("Datacenter", id,
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			if (m != null) {
 
@@ -346,7 +346,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * get this objects children
 	 */
-	public List<Object> getChildren(String viServer, HttpHeaders headers,
+	public List<Object> getChildren(String viServer, HttpHeaders headers, String sessionKey, 
 			String search, String fieldStr, String thisUri, String id,
 			String childType, int start, int position, int results) {
 
@@ -354,7 +354,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 
 			// Get the entity that matches the id
 			ManagedEntity m = new ViConnection().getEntity("Datacenter", id,
-					headers, viServer);
+					headers, sessionKey, viServer);
 
 			if (m == null) {
 				return null;
@@ -427,7 +427,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * create a child object of this type
 	 */
-	public Response createChild(String viServer, HttpHeaders headers, String fields,
+	public Response createChild(String viServer, HttpHeaders headers, String sessionKey, String fields,
 			String thisUri, String id, String childType, RESTRequestBody body) {
 
 		/*
