@@ -77,7 +77,7 @@ public class ManagedObjectController {
 			@QueryParam("fields") String fields) {
 
 		return this.getEntityByIdEx(viServer, headers, id, fields, search,
-				objectType, childType, start, results);
+				objectType, null, start, results);
 	}
 
 	/*
@@ -98,7 +98,7 @@ public class ManagedObjectController {
 			@QueryParam("fields") String fields) {
 
 		return this.getEntityByIdEx(viServer, headers, id, fields, search,
-				objectType, null, start, results);
+				objectType, childType, start, results);
 	}
 
 	/*

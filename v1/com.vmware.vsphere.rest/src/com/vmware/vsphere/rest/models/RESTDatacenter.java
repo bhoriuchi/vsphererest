@@ -430,10 +430,11 @@ public class RESTDatacenter extends RESTManagedEntity {
 	public Response createChild(String viServer, HttpHeaders headers, String fields,
 			String thisUri, String id, String childType, RESTRequestBody body) {
 
+		/*
 		ViConnection vi = new ViConnection(headers, viServer);
 		ServiceInstance si = vi.getServiceInstance();
 		Folder rootFolder = si.getRootFolder();
-
+		 */
 		
 		
 		return null;
