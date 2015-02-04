@@ -42,11 +42,11 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	// overloaded constructor
-	public RESTClusterComputeResource(ClusterComputeResource mo, String uri, String fields) {
-		this.init(mo, uri, fields);
+	public RESTClusterComputeResource(ClusterComputeResource mo, String uri, String fields, String apiVersion) {
+		this.init(mo, uri, fields, apiVersion);
 	}
 	
-	public void init(ClusterComputeResource mo, String uri, String fields) {
+	public void init(ClusterComputeResource mo, String uri, String fields, String apiVersion) {
 
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
@@ -172,7 +172,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	/*
 	 * get all objects of this type
 	 */
-	public List<Object> getAll(String viServer, HttpHeaders headers, String sessionKey, 
+	public List<Object> getAll(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,  
 			String search, String fieldStr, String thisUri, int start,
 			int position, int results) {
 
@@ -183,7 +183,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 
 			return new ManagedObjectReferenceArray().getObjectArray(e,
 					ClusterComputeResource.class, RESTClusterComputeResource.class, search, thisUri,
-					fieldStr, position, start, results, false);
+					fieldStr, position, start, results, false, apiVersion);
 
 		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
@@ -196,7 +196,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	/*
 	 * get a specific object of this type by id
 	 */
-	public RESTClusterComputeResource getById(String viServer, HttpHeaders headers, String sessionKey, 
+	public RESTClusterComputeResource getById(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,  
 			String fieldStr, String thisUri, String id) {
 		
 		try {
@@ -206,7 +206,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 					headers, sessionKey, viServer);
 
 			if (m != null) {
-				return new RESTClusterComputeResource((ClusterComputeResource) m, thisUri, fieldStr);
+				return new RESTClusterComputeResource((ClusterComputeResource) m, thisUri, fieldStr, apiVersion);
 			} else {
 				return null;
 			}
@@ -223,7 +223,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	/*
 	 * create a new object of this type
 	 */
-	public Response create(String viServer, HttpHeaders headers, String sessionKey, String fields, 
+	public Response create(String viServer, HttpHeaders headers, String sessionKey, String apiVersion, String fields, 
 			String thisUri, RESTRequestBody body) {
 
 		try {
@@ -265,7 +265,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 					URI uri = new URI(thisUri + mo.getMOR().getType().toLowerCase()
 							+ "s/" + mo.getMOR().getVal());
 					return Response.created(uri)
-							.entity(new RESTClusterComputeResource(mo, thisUri, fields))
+							.entity(new RESTClusterComputeResource(mo, thisUri, fields, apiVersion))
 							.build();
 				}
 			}

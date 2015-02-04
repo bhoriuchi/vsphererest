@@ -5,7 +5,6 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.Base64;
 import java.util.Base64.Decoder;
-import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
 
@@ -68,34 +67,22 @@ public class ViConnection {
 			// otherwise try basic authentication
 			else {
 
-				// make sure that there are headers
-				if (this.getHeaders() == null
-						|| (this.getHeaders() instanceof HttpHeaders) == false) {
-					return null;
-				}
-
-				// get the authentication headers
-				List<String> authHeaders = this.getHeaders().getRequestHeader(
-						HttpHeaders.AUTHORIZATION);
 				String base64Credentials = null;
+				String authHeader = new HeaderParser().getHeader(headers, HttpHeaders.AUTHORIZATION, basic);
+				
+				if (authHeader != null) {
+					base64Credentials = authHeader.substring(authHeader
+							.indexOf(basic) + basic.length());
 
-				// find the basic authentication header
-				for (String header : authHeaders) {
-					if (header.indexOf(basic) != -1) {
-						base64Credentials = header.substring(header
-								.indexOf(basic) + basic.length());
+					// decode header into its parts
+					Decoder decoder = Base64.getDecoder();
+					String credentials = new String(
+							decoder.decode(base64Credentials));
+					final String[] values = credentials.split(":", 2);
 
-						// decode header into its parts
-						Decoder decoder = Base64.getDecoder();
-						String credentials = new String(
-								decoder.decode(base64Credentials));
-						final String[] values = credentials.split(":", 2);
-
-						// try to connect and set the service instance
-						this.setSi(new ServiceInstance(new URL(this.getSdk()), values[0],
-								values[1], true));
-						break;
-					}
+					// try to connect and set the service instance
+					this.setSi(new ServiceInstance(new URL(this.getSdk()), values[0],
+							values[1], true));
 				}
 			}
 

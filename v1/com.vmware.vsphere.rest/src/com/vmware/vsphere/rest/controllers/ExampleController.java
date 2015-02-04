@@ -6,13 +6,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.vmware.vim25.Description;
-import com.vmware.vim25.HostCpuIdInfo;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.ResourceAllocationInfo;
 import com.vmware.vim25.SharesInfo;
 import com.vmware.vim25.SharesLevel;
 import com.vmware.vim25.VirtualDevice;
-import com.vmware.vim25.VirtualDeviceBackingInfo;
 import com.vmware.vim25.VirtualDeviceBusSlotInfo;
 import com.vmware.vim25.VirtualDeviceConfigSpec;
 import com.vmware.vim25.VirtualDeviceConfigSpecFileOperation;
@@ -22,7 +20,6 @@ import com.vmware.vim25.VirtualMachineBootOptions;
 import com.vmware.vim25.VirtualMachineBootOptionsBootableDevice;
 import com.vmware.vim25.VirtualMachineConfigSpec;
 import com.vmware.vim25.VirtualMachineConsolePreferences;
-import com.vmware.vim25.VirtualMachineCpuIdInfoSpec;
 import com.vmware.vim25.VirtualDeviceConnectInfoStatus;
 import com.vmware.vim25.VirtualDeviceConfigSpecOperation;
 

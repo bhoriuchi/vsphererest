@@ -79,7 +79,7 @@ public class ManagedObjectReferenceArray {
 	
 	public List<Object> getObjectArray(ManagedEntity[] mArray, Class<?> vimType, Class<?> restType,
 			String search, String thisUri, String fieldStr, int position,
-			int start, int results, boolean flatten) {
+			int start, int results, boolean flatten, String apiVersion) {
 		int count = 0;
 
 		List<Object> moList = new ArrayList<Object>();
@@ -115,8 +115,8 @@ public class ManagedObjectReferenceArray {
 						Object mo = restClass.newInstance();
 
 						// create parameter/argument array and init the rest class
-						Class<?> params[] = { vimClass, String.class, String.class };
-						Object args[] = { vimClass.cast(me), thisUri, fieldStr };
+						Class<?> params[] = { vimClass, String.class, String.class, String.class };
+						Object args[] = { vimClass.cast(me), thisUri, fieldStr, apiVersion };
 						Method method = restClass.getMethod("init", params);
 						method.invoke(mo, args);
 

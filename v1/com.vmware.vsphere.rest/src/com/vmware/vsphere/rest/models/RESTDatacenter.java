@@ -46,14 +46,14 @@ public class RESTDatacenter extends RESTManagedEntity {
 	}
 
 	// overloaded constructor
-	public RESTDatacenter(Datacenter mo, String uri, String fields) {
-		this.init(mo, uri, fields);
+	public RESTDatacenter(Datacenter mo, String uri, String fields, String apiVersion) {
+		this.init(mo, uri, fields, apiVersion);
 	}
 
 	/*
 	 * initialize the object
 	 */
-	public void init(Datacenter mo, String uri, String fields) {
+	public void init(Datacenter mo, String uri, String fields, String apiVersion) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 
@@ -161,9 +161,10 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * get all objects of this type
 	 */
-	public List<Object> getAll(String viServer, HttpHeaders headers, String sessionKey, 
-			String search, String fieldStr, String thisUri, int start,
-			int position, int results) {
+	public List<Object> getAll(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String search,
+			String fieldStr, String thisUri, int start, int position,
+			int results) {
 
 		try {
 
@@ -172,7 +173,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 
 			return new ManagedObjectReferenceArray().getObjectArray(e,
 					Datacenter.class, RESTDatacenter.class, search, thisUri,
-					fieldStr, position, start, results, false);
+					fieldStr, position, start, results, false, apiVersion);
 
 		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
@@ -185,9 +186,10 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * get a specific object of this type by id
 	 */
-	public RESTDatacenter getById(String viServer, HttpHeaders headers, String sessionKey, 
-			String fieldStr, String thisUri, String id) {
-		
+	public RESTDatacenter getById(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String fieldStr,
+			String thisUri, String id) {
+
 		try {
 
 			// Get the entity that matches the id
@@ -195,7 +197,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 					headers, sessionKey, viServer);
 
 			if (m != null) {
-				return new RESTDatacenter((Datacenter) m, thisUri, fieldStr);
+				return new RESTDatacenter((Datacenter) m, thisUri, fieldStr, apiVersion);
 			} else {
 				return null;
 			}
@@ -211,7 +213,8 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * create a new object of this type
 	 */
-	public Response create(String viServer, HttpHeaders headers, String sessionKey, String fields,
+	public Response create(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String fields,
 			String thisUri, RESTRequestBody body) {
 
 		ViConnection vi = new ViConnection(headers, sessionKey, viServer);
@@ -225,7 +228,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 				URI uri = new URI(thisUri + dc.getMOR().getType().toLowerCase()
 						+ "s/" + dc.getMOR().getVal());
 				return Response.created(uri)
-						.entity(new RESTDatacenter(dc, thisUri, fields))
+						.entity(new RESTDatacenter(dc, thisUri, fields, apiVersion))
 						.build();
 			} else {
 				return Response
@@ -256,11 +259,11 @@ public class RESTDatacenter extends RESTManagedEntity {
 		return null;
 	}
 
-	
 	/*
 	 * update this object
 	 */
-	public Response update(String viServer, HttpHeaders headers, String sessionKey, String fields,
+	public Response update(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String fields,
 			String thisUri, String id, RESTRequestBody body) {
 
 		try {
@@ -308,7 +311,8 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * remove this object
 	 */
-	public Response remove(String viServer, HttpHeaders headers, String sessionKey, String fields,
+	public Response remove(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String fields,
 			String thisUri, String id) {
 		try {
 
@@ -346,9 +350,10 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * get this objects children
 	 */
-	public List<Object> getChildren(String viServer, HttpHeaders headers, String sessionKey, 
-			String search, String fieldStr, String thisUri, String id,
-			String childType, int start, int position, int results) {
+	public List<Object> getChildren(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String search,
+			String fieldStr, String thisUri, String id, String childType,
+			int start, int position, int results) {
 
 		try {
 
@@ -368,43 +373,48 @@ public class RESTDatacenter extends RESTManagedEntity {
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getDatastoreFolder().getChildEntity(),
 						Datastore.class, RESTDatastore.class, search, thisUri,
-						fieldStr, position, start, results, true);
+						fieldStr, position, start, results, true, apiVersion);
 			} else if (childType.toLowerCase().equals("hostsystem")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getHostFolder().getChildEntity(), HostSystem.class,
 						RESTHostSystem.class, search, thisUri, fieldStr,
-						position, start, results, true);
+						position, start, results, true, apiVersion);
 			} else if (childType.toLowerCase().equals("clustercomputeresource")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
-						.getHostFolder().getChildEntity(), ClusterComputeResource.class,
-						RESTClusterComputeResource.class, search, thisUri, fieldStr,
-						position, start, results, false);
+						.getHostFolder().getChildEntity(),
+						ClusterComputeResource.class,
+						RESTClusterComputeResource.class, search, thisUri,
+						fieldStr, position, start, results, false, apiVersion);
 			} else if (childType.toLowerCase().equals("network")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getNetworkFolder().getChildEntity(), Network.class,
 						RESTNetwork.class, search, thisUri, fieldStr, position,
-						start, results, true);
-			} else if (childType.toLowerCase().equals("distributedvirtualportgroup")) {
+						start, results, true, apiVersion);
+			} else if (childType.toLowerCase().equals(
+					"distributedvirtualportgroup")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
-						.getNetworkFolder().getChildEntity(), DistributedVirtualPortgroup.class,
-						RESTDistributedVirtualPortgroup.class, search, thisUri, fieldStr, position,
-						start, results, true);
-			} else if (childType.toLowerCase().equals("vmwaredistributedvirtualswitch")) {
+						.getNetworkFolder().getChildEntity(),
+						DistributedVirtualPortgroup.class,
+						RESTDistributedVirtualPortgroup.class, search, thisUri,
+						fieldStr, position, start, results, true, apiVersion);
+			} else if (childType.toLowerCase().equals(
+					"vmwaredistributedvirtualswitch")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
-						.getNetworkFolder().getChildEntity(), VmwareDistributedVirtualSwitch.class,
-						RESTVmwareDistributedVirtualSwitch.class, search, thisUri, fieldStr, position,
-						start, results, true);
+						.getNetworkFolder().getChildEntity(),
+						VmwareDistributedVirtualSwitch.class,
+						RESTVmwareDistributedVirtualSwitch.class, search,
+						thisUri, fieldStr, position, start, results, true, apiVersion);
 			} else if (childType.toLowerCase().equals("virtualmachine")) {
 
 				return new ManagedObjectReferenceArray().getObjectArray(mo
 						.getVmFolder().getChildEntity(), VirtualMachine.class,
 						RESTVirtualMachine.class, search, thisUri, fieldStr,
-						position, start, results, true);
+						position, start, results, true, apiVersion);
 			}
 
 		} catch (NullPointerException e) {
@@ -427,33 +437,19 @@ public class RESTDatacenter extends RESTManagedEntity {
 	/*
 	 * create a child object of this type
 	 */
-	public Response createChild(String viServer, HttpHeaders headers, String sessionKey, String fields,
+	public Response createChild(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String fields,
 			String thisUri, String id, String childType, RESTRequestBody body) {
 
 		/*
-		ViConnection vi = new ViConnection(headers, viServer);
-		ServiceInstance si = vi.getServiceInstance();
-		Folder rootFolder = si.getRootFolder();
+		 * ViConnection vi = new ViConnection(headers, viServer);
+		 * ServiceInstance si = vi.getServiceInstance(); Folder rootFolder =
+		 * si.getRootFolder();
 		 */
-		
-		
+
 		return null;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	/**
 	 * @return the configuration
 	 */

@@ -54,9 +54,10 @@ public class ManagedObjectController {
 			@DefaultValue("50") @QueryParam("results") int results,
 			@DefaultValue("") @QueryParam("search") String search,
 			@QueryParam("fields") String fields,
-			@QueryParam("sessionkey") String sessionKey) {
+			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion) {
 
-		return this.getAllEx(viServer, headers, sessionKey, fields, search, objectType,
+		return this.getAllEx(viServer, headers, sessionKey, apiVersion, fields, search, objectType,
 				start, results);
 	}
 
@@ -76,9 +77,10 @@ public class ManagedObjectController {
 			@DefaultValue("50") @QueryParam("results") int results,
 			@DefaultValue("") @QueryParam("search") String search,
 			@QueryParam("fields") String fields,
-			@QueryParam("sessionkey") String sessionKey) {
+			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion) {
 
-		return this.getEntityByIdEx(viServer, headers, sessionKey, id, fields, search,
+		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion, id, fields, search,
 				objectType, null, start, results);
 	}
 
@@ -98,9 +100,10 @@ public class ManagedObjectController {
 			@DefaultValue("50") @QueryParam("results") int results,
 			@DefaultValue("") @QueryParam("search") String search,
 			@QueryParam("fields") String fields,
-			@QueryParam("sessionkey") String sessionKey) {
+			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion) {
 
-		return this.getEntityByIdEx(viServer, headers, sessionKey, id, fields, search,
+		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion, id, fields, search,
 				objectType, childType, start, results);
 	}
 
@@ -117,9 +120,10 @@ public class ManagedObjectController {
 			@PathParam("childType") String childType,
 			@PathParam("id") String id, @QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion,
 			RESTRequestBody body) {
 
-		return this.postEntityEx(viServer, headers, sessionKey, null, fields, objectType,
+		return this.postEntityEx(viServer, headers, sessionKey, apiVersion, null, fields, objectType,
 				null, body);
 	}
 
@@ -138,9 +142,10 @@ public class ManagedObjectController {
 			@PathParam("id") String id, 
 			@QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion,
 			RESTRequestBody body) {
 
-		return this.postEntityEx(viServer, headers, sessionKey, id, fields, objectType,
+		return this.postEntityEx(viServer, headers, sessionKey, apiVersion, id, fields, objectType,
 				childType, body);
 	}
 
@@ -159,9 +164,10 @@ public class ManagedObjectController {
 			@PathParam("id") String id, 
 			@QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion,
 			RESTRequestBody body) {
 
-		return this.putEntityEx(viServer, headers, sessionKey, id, fields, objectType, childType, body);
+		return this.putEntityEx(viServer, headers, sessionKey, apiVersion, id, fields, objectType, childType, body);
 	}
 
 	
@@ -179,9 +185,10 @@ public class ManagedObjectController {
 			@PathParam("objectType") String objectType,
 			@PathParam("id") String id,
 			@QueryParam("fields") String fields,
-			@QueryParam("sessionkey") String sessionKey) {
+			@QueryParam("sessionkey") String sessionKey,
+			@QueryParam("v") String apiVersion) {
 
-		return this.removeEntityEx(viServer, headers, sessionKey, id, fields, objectType);
+		return this.removeEntityEx(viServer, headers, sessionKey, apiVersion, id, fields, objectType);
 
 	}
 	
@@ -194,7 +201,7 @@ public class ManagedObjectController {
 	/*
 	 * function that gets all entities
 	 */
-	private Response getAllEx(String viServer, HttpHeaders headers, String sessionKey, 
+	private Response getAllEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
 			String fields, String search, String objectType, int start,
 			int results) {
 
@@ -211,9 +218,9 @@ public class ManagedObjectController {
 			results = this.maxResults;
 		}
 
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
+		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class, String.class,
 				String.class, String.class, int.class, int.class, int.class };
-		Object args[] = { viServer, headers, sessionKey, search, fieldStr, thisUri, start,
+		Object args[] = { viServer, headers, sessionKey, apiVersion, search, fieldStr, thisUri, start,
 				position, results };
 
 		// call the getAll function
@@ -231,7 +238,7 @@ public class ManagedObjectController {
 	/*
 	 * function that gets entities by their id as well as child entities
 	 */
-	private Response getEntityByIdEx(String viServer, HttpHeaders headers, String sessionKey, 
+	private Response getEntityByIdEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
 			String id, String fields, String search, String objectType,
 			String childType, int start, int results) {
 
@@ -248,9 +255,9 @@ public class ManagedObjectController {
 			results = this.maxResults;
 		}
 
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
+		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class, String.class,
 				String.class, String.class };
-		Object args[] = { viServer, headers, sessionKey, fieldStr, thisUri, id };
+		Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id };
 
 		// get the object by id
 		Object mo = this.callMethodByName(objectType, "getById", params, args);
@@ -263,10 +270,10 @@ public class ManagedObjectController {
 			if (childType != null) {
 
 				// set params/args for getChildren method
-				Class<?> childParams[] = { String.class, HttpHeaders.class, String.class,
+				Class<?> childParams[] = { String.class, HttpHeaders.class, String.class, String.class,
 						String.class, String.class, String.class, String.class,
 						String.class, int.class, int.class, int.class };
-				Object childArgs[] = { viServer, headers, sessionKey, search, fieldStr,
+				Object childArgs[] = { viServer, headers, sessionKey, apiVersion, search, fieldStr,
 						thisUri, id, childType, start, position, results };
 
 				// get the children
@@ -287,7 +294,7 @@ public class ManagedObjectController {
 	/*
 	 * function to create a new entity
 	 */
-	private Response postEntityEx(String viServer, HttpHeaders headers, String sessionKey, 
+	private Response postEntityEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
 			String id, String fields, String objectType, String childType,
 			RESTRequestBody body) {
 
@@ -301,10 +308,10 @@ public class ManagedObjectController {
 		if (id != null && childType != null) {
 
 			// create parameter/argument array
-			Class<?> params[] = { String.class, HttpHeaders.class, String.class,
+			Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
 					String.class, String.class, String.class, String.class,
 					RESTRequestBody.class };
-			Object args[] = { viServer, headers, sessionKey, fieldStr, thisUri, id,
+			Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id,
 					childType, body };
 
 			// call the create method
@@ -318,9 +325,9 @@ public class ManagedObjectController {
 		else {
 
 			// create parameter/argument array
-			Class<?> params[] = { String.class, HttpHeaders.class, String.class,
+			Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
 					String.class, String.class, RESTRequestBody.class };
-			Object args[] = { viServer, headers, sessionKey, fieldStr, thisUri, body };
+			Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, body };
 
 			// call the create method
 			Object r = this
@@ -336,7 +343,7 @@ public class ManagedObjectController {
 	/*
 	 * function to update an entitiy
 	 */
-	private Response putEntityEx(String viServer, HttpHeaders headers, String sessionKey, 
+	private Response putEntityEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
 			String id, String fields, String objectType, String childType,
 			RESTRequestBody body) {
 		
@@ -347,10 +354,10 @@ public class ManagedObjectController {
 			fieldStr = fields;
 		}
 		
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class,
+		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
 				String.class, String.class, String.class,
 				RESTRequestBody.class };
-		Object args[] = { viServer, headers, sessionKey, fieldStr, thisUri, id,
+		Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id,
 				body };
 		
 		// call the create method
@@ -370,7 +377,7 @@ public class ManagedObjectController {
 	/*
 	 * remove an entity
 	 */
-	private Response removeEntityEx(String viServer, HttpHeaders headers, String sessionKey, 
+	private Response removeEntityEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
 			String id, String fields, String objectType) {
 		// initialize variables
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
@@ -380,9 +387,9 @@ public class ManagedObjectController {
 		}
 
 		// create parameter/argument array
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class,
+		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
 				String.class, String.class, String.class };
-		Object args[] = { viServer, headers, sessionKey, fieldStr, thisUri, id };
+		Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id };
 		
 		// call the create method
 		Object r = this.callMethodByName(objectType, "remove", params,
@@ -401,6 +408,7 @@ public class ManagedObjectController {
 			Class<?> params[], Object args[]) {
 		try {
 
+			
 			// get all classes from com.vmware.vsphere.rest.models
 			Reflections reflections = new Reflections(
 					"com.vmware.vsphere.rest.models");
