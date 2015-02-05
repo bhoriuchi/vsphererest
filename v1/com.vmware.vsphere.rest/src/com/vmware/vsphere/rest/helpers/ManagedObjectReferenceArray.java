@@ -28,11 +28,6 @@ public class ManagedObjectReferenceArray {
 
 			if (objArray != null) {
 				for (Object o : objArray) {
-
-					/*
-					 * objList.add(uri.getUri((ManagedObjectReference)
-					 * o.getClass() .getMethod("getMOR").invoke(o), ref));
-					 */
 					objList.add(uri.getUri(o, ref));
 				}
 			}
@@ -79,7 +74,7 @@ public class ManagedObjectReferenceArray {
 	
 	public List<Object> getObjectArray(ManagedEntity[] mArray, Class<?> vimType, Class<?> restType,
 			String search, String thisUri, String fieldStr, int position,
-			int start, int results, boolean flatten, String apiVersion) {
+			int start, int results, boolean flatten) {
 		int count = 0;
 
 		List<Object> moList = new ArrayList<Object>();
@@ -89,7 +84,7 @@ public class ManagedObjectReferenceArray {
 		try {
 			for (ManagedEntity m : mArray) {
 
-				System.out.println(m.getMOR().getType() + " equals " + vimType.getSimpleName());
+				//System.out.println(m.getMOR().getType() + " equals " + vimType.getSimpleName());
 				
 				if (m.getMOR().getType().equals("Folder") && flatten) {
 					mlist = this.flattenFolders((Folder) m, vimType.getSimpleName(), new ArrayList<ManagedEntity>());
@@ -115,8 +110,8 @@ public class ManagedObjectReferenceArray {
 						Object mo = restClass.newInstance();
 
 						// create parameter/argument array and init the rest class
-						Class<?> params[] = { vimClass, String.class, String.class, String.class };
-						Object args[] = { vimClass.cast(me), thisUri, fieldStr, apiVersion };
+						Class<?> params[] = { vimClass, String.class, String.class };
+						Object args[] = { vimClass.cast(me), thisUri, fieldStr };
 						Method method = restClass.getMethod("init", params);
 						method.invoke(mo, args);
 

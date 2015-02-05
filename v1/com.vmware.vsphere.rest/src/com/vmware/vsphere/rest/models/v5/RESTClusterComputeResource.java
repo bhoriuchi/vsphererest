@@ -1,10 +1,9 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
-import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -28,93 +27,97 @@ import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 
 public class RESTClusterComputeResource extends RESTComputeResource {
-	
+
 	private ClusterActionHistory[] actionHistory;
 	private ClusterConfigInfo configuration;
 	private ClusterDrsFaults[] drsFault;
 	private ClusterDrsRecommendation[] drsRecommendation;
 	private ClusterDrsMigration[] migrationHistory;
 	private ClusterRecommendation[] recommendation;
-	
-	
+
 	// constructor
 	public RESTClusterComputeResource() {
 	}
 
 	// overloaded constructor
-	public RESTClusterComputeResource(ClusterComputeResource mo, String uri, String fields, String apiVersion) {
-		this.init(mo, uri, fields, apiVersion);
+	public RESTClusterComputeResource(ClusterComputeResource mo, String uri,
+			String fields) {
+		this.init(mo, uri, fields);
 	}
-	
-	public void init(ClusterComputeResource mo, String uri, String fields, String apiVersion) {
+
+	public void init(ClusterComputeResource mo, String uri, String fields) {
 
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
-		
+
 		try {
-			
+
 			// specific fields
 			if (fg.get("actionHistory", fields)) {
 				this.setActionHistory(mo.getActionHistory());
-			}		
+			}
 			if (fg.get("configuration", fields)) {
 				this.setConfiguration(mo.getConfiguration());
-			}	
+			}
 			if (fg.get("drsFault", fields)) {
 				this.setDrsFault(mo.getDrsFault());
-			}	
+			}
 			if (fg.get("drsRecommendation", fields)) {
 				this.setDrsRecommendation(mo.getDrsRecommendation());
-			}	
+			}
 			if (fg.get("migrationHistory", fields)) {
 				this.setMigrationHistory(mo.getMigrationHistory());
-			}	
+			}
 			if (fg.get("recommendation", fields)) {
 				this.setRecommendation(mo.getRecommendation());
-			}	
-			
-			
+			}
+
 			// compute resource specific fields
 			if (fg.get("configurationEx", fields)) {
 				this.setConfigurationEx(mo.getConfigurationEx());
-			}		
+			}
 			if (fg.get("datastore", fields)) {
-				this.setDatastore(new ManagedObjectReferenceArray().getMORArray(mo.getDatastores(), uri));
+				this.setDatastore(new ManagedObjectReferenceArray()
+						.getMORArray(mo.getDatastores(), uri));
 			}
 			if (fg.get("environmentBrowser", fields)) {
-				
-				this.setEnvironmentBrowser(new ManagedObjectReferenceUri().getUri(mo.getEnvironmentBrowser(), uri));
-			}			
+
+				this.setEnvironmentBrowser(new ManagedObjectReferenceUri()
+						.getUri(mo.getEnvironmentBrowser(), uri));
+			}
 			if (fg.get("host", fields)) {
-				this.setHost(new ManagedObjectReferenceArray().getMORArray(mo.getHosts(), uri));
+				this.setHost(new ManagedObjectReferenceArray().getMORArray(
+						mo.getHosts(), uri));
 			}
 			if (fg.get("network", fields)) {
-				this.setNetwork(new ManagedObjectReferenceArray().getMORArray(mo.getNetworks(), uri));
+				this.setNetwork(new ManagedObjectReferenceArray().getMORArray(
+						mo.getNetworks(), uri));
 			}
 			if (fg.get("resourcePool", fields)) {
-				this.setResourcePool(new ManagedObjectReferenceUri().getUri(mo.getResourcePool(), uri));
+				this.setResourcePool(new ManagedObjectReferenceUri().getUri(
+						mo.getResourcePool(), uri));
 			}
 			if (fg.get("summary", fields)) {
 				this.setSummary(mo.getSummary());
 			}
 
-			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
 				this.setId(mo.getMOR().getVal());
 			}
 			if (fg.get("moRef", fields)) {
-				this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
+				this.setMoRef(mo.getMOR().getType() + "-"
+						+ mo.getMOR().getVal());
 			}
-			
+
 			// extended from RESTExtensibleManagedObject
 			if (fg.get("availableField", fields)) {
 				this.setAvailableField(mo.getAvailableField());
-			}		
+			}
 			if (fg.get("value", fields)) {
 				this.setValue(mo.getValues());
-			}			
-			
+			}
+
 			// extended from RESTManagedEntity
 			if (fg.get("alarmActionsEnabled", fields)) {
 				this.setAlarmActionsEnabled(mo.getAlarmActionEabled());
@@ -144,13 +147,15 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 				this.setOverallStatus(mo.getOverallStatus());
 			}
 			if (fg.get("parent", fields)) {
-				this.setParent(new ManagedObjectReferenceUri().getUri(mo.getParent(), uri));
+				this.setParent(new ManagedObjectReferenceUri().getUri(
+						mo.getParent(), uri));
 			}
 			if (fg.get("permission", fields)) {
 				this.setPermission(mo.getPermission());
 			}
 			if (fg.get("recentTask", fields)) {
-				this.setRecentTask(new ManagedObjectReferenceArray().getMORArray(mo.getRecentTasks(), uri));
+				this.setRecentTask(new ManagedObjectReferenceArray()
+						.getMORArray(mo.getRecentTasks(), uri));
 			}
 			if (fg.get("tag", fields)) {
 				this.setTag(mo.getTag());
@@ -159,82 +164,29 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 				this.setTriggeredAlarmState(mo.getTriggeredAlarmState());
 			}
 
-
-
-		} catch (RemoteException | InvocationTargetException | NoSuchMethodException e) {
+		} catch (RemoteException | InvocationTargetException
+				| NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
-	
-	
-	/*
-	 * get all objects of this type
-	 */
-	public List<Object> getAll(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,  
-			String search, String fieldStr, String thisUri, int start,
-			int position, int results) {
-
-		try {
-
-			ManagedEntity[] e = new ViConnection().getEntities("ClusterComputeResource",
-					headers, sessionKey, viServer);
-
-			return new ManagedObjectReferenceArray().getObjectArray(e,
-					ClusterComputeResource.class, RESTClusterComputeResource.class, search, thisUri,
-					fieldStr, position, start, results, false, apiVersion);
-
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-		}
-
-		return null;
-	}
-
-	/*
-	 * get a specific object of this type by id
-	 */
-	public RESTClusterComputeResource getById(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,  
-			String fieldStr, String thisUri, String id) {
-		
-		try {
-
-			// Get the entity that matches the id
-			ManagedEntity m = new ViConnection().getEntity("ClusterComputeResource", id,
-					headers, sessionKey, viServer);
-
-			if (m != null) {
-				return new RESTClusterComputeResource((ClusterComputeResource) m, thisUri, fieldStr, apiVersion);
-			} else {
-				return null;
-			}
-
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return null;
-	}
-	
-	
 	/*
 	 * create a new object of this type
 	 */
-	public Response create(String viServer, HttpHeaders headers, String sessionKey, String apiVersion, String fields, 
-			String thisUri, RESTRequestBody body) {
+	public Response create(String vimType, String vimClass, String restClass,
+			String viServer, HttpHeaders headers, String sessionKey,
+			String fields, String thisUri, RESTRequestBody body) {
 
 		try {
 
-			// check for name 
+			// check for name
 			if (body.getName() == null) {
 				return Response
 						.status(400)
 						.entity(new RESTCustomResponse("badRequest",
 								"name not specified")).build();
-			} 
+			}
 			// check for datacenter
 			else if (body.getDatacenter() == null) {
 				return Response
@@ -242,31 +194,34 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 						.entity(new RESTCustomResponse("badRequest",
 								"datacenter not specified")).build();
 			}
-			
+
 			// create the object
 			else {
-				
+
 				// look for the datacenter
-				ManagedEntity m = new ViConnection().getEntity("Datacenter", body.getDatacenter(),
-						headers, sessionKey, viServer);
-				
+				ManagedEntity m = new ViConnection().getEntity("Datacenter",
+						body.getDatacenter(), headers, sessionKey, viServer);
+
 				// if the datacenter was found
 				if (m != null) {
-					
+
 					// create an empty spec if one doesnt exist
 					if (body.getSpec() == null) {
 						body.setSpec(new ClusterConfigSpec());
 					}
-					
+
 					Datacenter dc = (Datacenter) m;
-					
-					
-					ClusterComputeResource mo = dc.getHostFolder().createCluster(body.getName(), (ClusterConfigSpec) body.getSpec());
-					URI uri = new URI(thisUri + mo.getMOR().getType().toLowerCase()
-							+ "s/" + mo.getMOR().getVal());
-					return Response.created(uri)
-							.entity(new RESTClusterComputeResource(mo, thisUri, fields, apiVersion))
-							.build();
+
+					ClusterComputeResource mo = dc.getHostFolder()
+							.createCluster(body.getName(),
+									(ClusterConfigSpec) body.getSpec());
+					URI uri = new URI(thisUri
+							+ mo.getMOR().getType().toLowerCase() + "s/"
+							+ mo.getMOR().getVal());
+					return Response
+							.created(uri)
+							.entity(new RESTClusterComputeResource(mo, thisUri,
+									fields)).build();
 				}
 			}
 		} catch (InvalidName e) {
@@ -292,26 +247,10 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 		return null;
 	}
 
-	
 	/*
 	 * update this object
 	 */
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	/**
 	 * @return the actionHistory
 	 */
@@ -320,7 +259,8 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	/**
-	 * @param actionHistory the actionHistory to set
+	 * @param actionHistory
+	 *            the actionHistory to set
 	 */
 	public void setActionHistory(ClusterActionHistory[] actionHistory) {
 		this.actionHistory = actionHistory;
@@ -334,7 +274,8 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	/**
-	 * @param configuration the configuration to set
+	 * @param configuration
+	 *            the configuration to set
 	 */
 	public void setConfiguration(ClusterConfigInfo configuration) {
 		this.configuration = configuration;
@@ -348,7 +289,8 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	/**
-	 * @param drsFault the drsFault to set
+	 * @param drsFault
+	 *            the drsFault to set
 	 */
 	public void setDrsFault(ClusterDrsFaults[] drsFault) {
 		this.drsFault = drsFault;
@@ -362,9 +304,11 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	/**
-	 * @param drsRecommendation the drsRecommendation to set
+	 * @param drsRecommendation
+	 *            the drsRecommendation to set
 	 */
-	public void setDrsRecommendation(ClusterDrsRecommendation[] drsRecommendation) {
+	public void setDrsRecommendation(
+			ClusterDrsRecommendation[] drsRecommendation) {
 		this.drsRecommendation = drsRecommendation;
 	}
 
@@ -376,7 +320,8 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	/**
-	 * @param migrationHistory the migrationHistory to set
+	 * @param migrationHistory
+	 *            the migrationHistory to set
 	 */
 	public void setMigrationHistory(ClusterDrsMigration[] migrationHistory) {
 		this.migrationHistory = migrationHistory;
@@ -390,15 +335,11 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 
 	/**
-	 * @param recommendation the recommendation to set
+	 * @param recommendation
+	 *            the recommendation to set
 	 */
 	public void setRecommendation(ClusterRecommendation[] recommendation) {
 		this.recommendation = recommendation;
 	}
-
-
-
-
-
 
 }

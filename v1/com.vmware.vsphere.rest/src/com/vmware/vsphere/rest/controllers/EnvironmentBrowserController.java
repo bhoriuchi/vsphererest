@@ -11,7 +11,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import com.vmware.vsphere.rest.models.RESTEnvironmentBrowser;
+import com.vmware.vsphere.rest.models.v5.RESTEnvironmentBrowser;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.mo.EnvironmentBrowser;

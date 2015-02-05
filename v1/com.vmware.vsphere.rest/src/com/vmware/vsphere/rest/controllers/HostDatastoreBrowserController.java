@@ -10,7 +10,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
-import com.vmware.vsphere.rest.models.RESTHostDatastoreBrowser;
+import com.vmware.vsphere.rest.models.v5.RESTHostDatastoreBrowser;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.mo.HostDatastoreBrowser;

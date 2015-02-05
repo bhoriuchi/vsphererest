@@ -1,10 +1,10 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import java.rmi.RemoteException;
 
 import com.vmware.vim25.mo.Task;
 import com.vmware.vsphere.rest.helpers.FieldGet;
-import com.vmware.vsphere.rest.models.RESTTaskInfo;
+import com.vmware.vsphere.rest.models.v5.RESTTaskInfo;
 
 
 public class RESTTask extends RESTExtensibleManagedObject {

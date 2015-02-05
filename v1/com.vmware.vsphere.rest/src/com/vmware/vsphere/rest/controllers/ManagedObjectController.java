@@ -22,9 +22,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.reflections.Reflections;
 
-import com.vmware.vsphere.rest.models.RESTCustomResponse;
-import com.vmware.vsphere.rest.models.RESTManagedObject;
-import com.vmware.vsphere.rest.models.RESTRequestBody;
+import com.vmware.vsphere.rest.models.v5.RESTCustomResponse;
+import com.vmware.vsphere.rest.models.v5.RESTManagedObject;
+import com.vmware.vsphere.rest.models.v5.RESTRequestBody;
 import com.hubspot.jackson.jaxrs.PropertyFiltering;
 
 /*
@@ -36,6 +36,14 @@ public class ManagedObjectController {
 	// default values
 	private int maxResults = 100;
 	final static String defaults = "id,name,responseStatus,responseMessage";
+	final static String restPrefix = "REST";
+
+	// API version models
+	final static String vim25ModelPackage = "com.vmware.vim25.mo";
+	final static String defaultVimModelPackage = vim25ModelPackage;
+	
+	final static String v5ModelPackage = "com.vmware.vsphere.rest.models.v5";
+	final static String defaultModelPackage = v5ModelPackage;
 
 	// initialize
 	@Context
@@ -57,8 +65,8 @@ public class ManagedObjectController {
 			@QueryParam("sessionkey") String sessionKey,
 			@QueryParam("v") String apiVersion) {
 
-		return this.getAllEx(viServer, headers, sessionKey, apiVersion, fields, search, objectType,
-				start, results);
+		return this.getAllEx(viServer, headers, sessionKey, apiVersion, fields,
+				search, objectType, start, results);
 	}
 
 	/*
@@ -80,8 +88,8 @@ public class ManagedObjectController {
 			@QueryParam("sessionkey") String sessionKey,
 			@QueryParam("v") String apiVersion) {
 
-		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion, id, fields, search,
-				objectType, null, start, results);
+		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion,
+				id, fields, search, objectType, null, start, results);
 	}
 
 	/*
@@ -103,8 +111,8 @@ public class ManagedObjectController {
 			@QueryParam("sessionkey") String sessionKey,
 			@QueryParam("v") String apiVersion) {
 
-		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion, id, fields, search,
-				objectType, childType, start, results);
+		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion,
+				id, fields, search, objectType, childType, start, results);
 	}
 
 	/*
@@ -120,11 +128,10 @@ public class ManagedObjectController {
 			@PathParam("childType") String childType,
 			@PathParam("id") String id, @QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
-			@QueryParam("v") String apiVersion,
-			RESTRequestBody body) {
+			@QueryParam("v") String apiVersion, RESTRequestBody body) {
 
-		return this.postEntityEx(viServer, headers, sessionKey, apiVersion, null, fields, objectType,
-				null, body);
+		return this.postEntityEx(viServer, headers, sessionKey, apiVersion,
+				null, fields, objectType, null, body);
 	}
 
 	/*
@@ -139,14 +146,12 @@ public class ManagedObjectController {
 			@PathParam("viServer") String viServer,
 			@PathParam("objectType") String objectType,
 			@PathParam("childType") String childType,
-			@PathParam("id") String id, 
-			@QueryParam("fields") String fields,
+			@PathParam("id") String id, @QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
-			@QueryParam("v") String apiVersion,
-			RESTRequestBody body) {
+			@QueryParam("v") String apiVersion, RESTRequestBody body) {
 
-		return this.postEntityEx(viServer, headers, sessionKey, apiVersion, id, fields, objectType,
-				childType, body);
+		return this.postEntityEx(viServer, headers, sessionKey, apiVersion, id,
+				fields, objectType, childType, body);
 	}
 
 	/*
@@ -161,17 +166,14 @@ public class ManagedObjectController {
 			@PathParam("viServer") String viServer,
 			@PathParam("objectType") String objectType,
 			@PathParam("childType") String childType,
-			@PathParam("id") String id, 
-			@QueryParam("fields") String fields,
+			@PathParam("id") String id, @QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
-			@QueryParam("v") String apiVersion,
-			RESTRequestBody body) {
+			@QueryParam("v") String apiVersion, RESTRequestBody body) {
 
-		return this.putEntityEx(viServer, headers, sessionKey, apiVersion, id, fields, objectType, childType, body);
+		return this.putEntityEx(viServer, headers, sessionKey, apiVersion, id,
+				fields, objectType, childType, body);
 	}
 
-	
-	
 	/*
 	 * Remove a RESTManagedObject
 	 */
@@ -183,26 +185,63 @@ public class ManagedObjectController {
 	public Response removeEntity(@Context HttpHeaders headers,
 			@PathParam("viServer") String viServer,
 			@PathParam("objectType") String objectType,
-			@PathParam("id") String id,
-			@QueryParam("fields") String fields,
+			@PathParam("id") String id, @QueryParam("fields") String fields,
 			@QueryParam("sessionkey") String sessionKey,
 			@QueryParam("v") String apiVersion) {
 
-		return this.removeEntityEx(viServer, headers, sessionKey, apiVersion, id, fields, objectType);
+		return this.removeEntityEx(viServer, headers, sessionKey, apiVersion,
+				id, fields, objectType);
 
 	}
-	
-	
 
-	
-
-	// private functions. these have been separated out for versioning and to limit the amount of redundant code
+	// private functions. these have been separated out for versioning and to
+	// limit the amount of redundant code
 
 	/*
 	 * function that gets all entities
 	 */
-	private Response getAllEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
-			String fields, String search, String objectType, int start,
+	private Response getAllEx(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String fields, String search,
+			String objectType, int start, int results) {
+
+		// initialize variables
+		String thisUri = uri.getBaseUri().toString() + viServer + "/";
+		int position = 0;
+		String fieldStr = defaults;
+		if (fields != null) {
+			fieldStr = fields;
+		}
+
+		// determine the result set
+		if (results > this.maxResults) {
+			results = this.maxResults;
+		}
+
+		Class<?> params[] = { String.class, String.class, String.class,
+				String.class, HttpHeaders.class, String.class, String.class,
+				String.class, String.class, int.class, int.class, int.class };
+		Object args[] = { "vimType", "vimClass", "restClass", viServer,
+				headers, sessionKey, search, fieldStr, thisUri, start,
+				position, results };
+
+		// call the getAll function
+		Object r = this.callMethodByName(objectType, "getAll", params, args,
+				apiVersion);
+
+		// return the results
+		if (r != null) {
+			return (Response) r;
+		}
+
+		return null;
+	}
+
+	/*
+	 * function that gets entities by their id as well as child entities
+	 */
+	private Response getEntityByIdEx(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String id, String fields,
+			String search, String objectType, String childType, int start,
 			int results) {
 
 		// initialize variables
@@ -218,85 +257,49 @@ public class ManagedObjectController {
 			results = this.maxResults;
 		}
 
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class, String.class,
-				String.class, String.class, int.class, int.class, int.class };
-		Object args[] = { viServer, headers, sessionKey, apiVersion, search, fieldStr, thisUri, start,
-				position, results };
-
-		// call the getAll function
-		Object moList = this.callMethodByName(objectType, "getAll", params,
-				args);
-
-		// return the results
-		if (moList != null) {
-			return Response.ok().entity(moList).build();
-		}
-
-		return null;
-	}
-
-	/*
-	 * function that gets entities by their id as well as child entities
-	 */
-	private Response getEntityByIdEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
-			String id, String fields, String search, String objectType,
-			String childType, int start, int results) {
-
-		// initialize variables
-		String thisUri = uri.getBaseUri().toString() + viServer + "/";
-		int position = 0;
-		String fieldStr = defaults;
-		if (fields != null) {
-			fieldStr = fields;
-		}
-
-		// determine the result set
-		if (results > this.maxResults) {
-			results = this.maxResults;
-		}
-
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class, String.class,
+		Class<?> params[] = { String.class, String.class, String.class,
+				String.class, HttpHeaders.class, String.class, String.class,
 				String.class, String.class };
-		Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id };
+		Object args[] = { "vimType", "vimClass", "restClass", viServer,
+				headers, sessionKey, fieldStr, thisUri, id };
 
 		// get the object by id
-		Object mo = this.callMethodByName(objectType, "getById", params, args);
+		Object mo = this.callMethodByName(objectType, "getById", params, args,
+				apiVersion);
 
-		// if the response is not null build an ok response
-		if (mo != null) {
+		Response r = (Response) mo;
 
-			// if the request was for a child type, try to get the
-			// children
-			if (childType != null) {
+		// if the request was for a child type, try to get the
+		// children
+		if (childType != null && r.getStatus() == 200) {
 
-				// set params/args for getChildren method
-				Class<?> childParams[] = { String.class, HttpHeaders.class, String.class, String.class,
-						String.class, String.class, String.class, String.class,
-						String.class, int.class, int.class, int.class };
-				Object childArgs[] = { viServer, headers, sessionKey, apiVersion, search, fieldStr,
-						thisUri, id, childType, start, position, results };
+			// set params/args for getChildren method
+			Class<?> childParams[] = { String.class, String.class,
+					String.class, String.class, HttpHeaders.class,
+					String.class, String.class, String.class, String.class,
+					String.class, String.class, int.class, int.class, int.class };
+			Object childArgs[] = { "vimType", "vimClass", "restClass",
+					viServer, headers, sessionKey, search, fieldStr, thisUri,
+					id, childType, start, position, results };
 
-				// get the children
-				Object moList = this.callMethodByName(objectType,
-						"getChildren", childParams, childArgs);
+			// get the children
+			Object cr = this.callMethodByName(objectType, "getChildren",
+					childParams, childArgs, apiVersion);
 
-				// if the response is not null build an ok response
-				if (moList != null) {
-					return Response.ok().entity(moList).build();
-				}
-			} else {
-				return Response.ok().entity(mo).build();
-			}
+			// if the response is not null build an ok response
+			return (Response) cr;
+
+		} else {
+			return r;
 		}
-		return null;
 	}
 
 	/*
 	 * function to create a new entity
 	 */
-	private Response postEntityEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
-			String id, String fields, String objectType, String childType,
-			RESTRequestBody body) {
+	private Response postEntityEx(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String id, String fields,
+			String objectType, String childType, RESTRequestBody body) {
 
 		// initialize variables
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
@@ -308,15 +311,16 @@ public class ManagedObjectController {
 		if (id != null && childType != null) {
 
 			// create parameter/argument array
-			Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
-					String.class, String.class, String.class, String.class,
+			Class<?> params[] = { String.class, String.class, String.class,
+					String.class, HttpHeaders.class, String.class,
+					String.class, String.class, String.class, String.class, String.class,
 					RESTRequestBody.class };
-			Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id,
-					childType, body };
-
+			Object args[] = { "vimType", "vimClass", "restClass", viServer,
+					headers, sessionKey, apiVersion, fieldStr, thisUri, id, childType, body };
+			
 			// call the create method
 			Object r = this.callMethodByName(objectType, "createChild", params,
-					args);
+					args, apiVersion);
 			if (r != null) {
 				return (Response) r;
 			}
@@ -325,13 +329,15 @@ public class ManagedObjectController {
 		else {
 
 			// create parameter/argument array
-			Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
+			Class<?> params[] = { String.class, String.class, String.class,
+					String.class, HttpHeaders.class, String.class,
 					String.class, String.class, RESTRequestBody.class };
-			Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, body };
+			Object args[] = { "vimType", "vimClass", "restClass", viServer,
+					headers, sessionKey, fieldStr, thisUri, body };
 
 			// call the create method
-			Object r = this
-					.callMethodByName(objectType, "create", params, args);
+			Object r = this.callMethodByName(objectType, "create", params,
+					args, apiVersion);
 			if (r != null) {
 				return (Response) r;
 			}
@@ -339,46 +345,44 @@ public class ManagedObjectController {
 
 		return null;
 	}
-	
+
 	/*
 	 * function to update an entitiy
 	 */
-	private Response putEntityEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
-			String id, String fields, String objectType, String childType,
-			RESTRequestBody body) {
-		
+	private Response putEntityEx(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String id, String fields,
+			String objectType, String childType, RESTRequestBody body) {
+
 		// initialize variables
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		String fieldStr = defaults;
 		if (fields != null) {
 			fieldStr = fields;
 		}
-		
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
-				String.class, String.class, String.class,
-				RESTRequestBody.class };
-		Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id,
-				body };
-		
+
+		Class<?> params[] = { String.class, String.class, String.class,
+				String.class, HttpHeaders.class, String.class, String.class,
+				String.class, String.class, RESTRequestBody.class };
+		Object args[] = { "vimType", "vimClass", "restClass", viServer,
+				headers, sessionKey, fieldStr, thisUri, id, body };
+
 		// call the create method
-		Object r = this.callMethodByName(objectType, "update", params,
-				args);
+		Object r = this.callMethodByName(objectType, "update", params, args,
+				apiVersion);
 		if (r != null) {
 			return (Response) r;
 		}
 
 		return null;
-		
+
 	}
 
-	
-	
-	
 	/*
 	 * remove an entity
 	 */
-	private Response removeEntityEx(String viServer, HttpHeaders headers, String sessionKey, String apiVersion,
-			String id, String fields, String objectType) {
+	private Response removeEntityEx(String viServer, HttpHeaders headers,
+			String sessionKey, String apiVersion, String id, String fields,
+			String objectType) {
 		// initialize variables
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		String fieldStr = defaults;
@@ -387,46 +391,74 @@ public class ManagedObjectController {
 		}
 
 		// create parameter/argument array
-		Class<?> params[] = { String.class, HttpHeaders.class, String.class, String.class,
-				String.class, String.class, String.class };
-		Object args[] = { viServer, headers, sessionKey, apiVersion, fieldStr, thisUri, id };
-		
+		Class<?> params[] = { String.class, String.class, String.class,
+				String.class, HttpHeaders.class, String.class, String.class,
+				String.class, String.class };
+		Object args[] = { "vimType", "vimClass", "restClass", viServer,
+				headers, sessionKey, fieldStr, thisUri, id };
+
 		// call the create method
-		Object r = this.callMethodByName(objectType, "remove", params,
-				args);
+		Object r = this.callMethodByName(objectType, "remove", params, args,
+				apiVersion);
 		if (r != null) {
 			return (Response) r;
 		}
-		
+
 		return null;
 	}
-	
+
 	/*
 	 * call a method by its name with parameters using reflections
 	 */
 	private Object callMethodByName(String objectType, String methodName,
-			Class<?> params[], Object args[]) {
+			Class<?> params[], Object args[], String apiVersion) {
 		try {
 
+			// default model packages. always default to the original version to
+			// avoid breaking existing calls that have no version specified
+			String modelPackage = defaultModelPackage;
+			String vimModelPackage = defaultVimModelPackage;
+
+			/* versioning is done by selecting class objects from a specific
+			 * package version
+			 */
 			
+			// version 5 is the first and indicates compatibility with vSphere 5
+			if (apiVersion == "5") {
+				modelPackage = v5ModelPackage;
+				vimModelPackage = vim25ModelPackage;
+			}
+
 			// get all classes from com.vmware.vsphere.rest.models
-			Reflections reflections = new Reflections(
-					"com.vmware.vsphere.rest.models");
+			Reflections reflections = new Reflections(modelPackage);
 			Set<Class<? extends RESTManagedObject>> allClasses = reflections
 					.getSubTypesOf(RESTManagedObject.class);
 
 			// loop through each of the classes
 			for (Class<?> c : allClasses) {
-
 				// if a class with the name REST<objectType> is found then
 				// attempt to use that
-				if (c.getSimpleName().toLowerCase()
-						.equals("rest" + objectType.toLowerCase())) {
+				if (c.getSimpleName()
+						.toLowerCase()
+						.equals(restPrefix.toLowerCase()
+								+ objectType.toLowerCase())) {
+
+					// set the vim class name
+					String vimType = c.getSimpleName().substring(
+							restPrefix.length(), c.getSimpleName().length());
+
+					// set values for the classes
+					args[0] = vimType;
+					args[1] = vimModelPackage + "." + vimType;
+					args[2] = c.getName();
 
 					// create a new instance of the object and call its getById
 					// method
 					Object o = c.newInstance();
 					Method m = c.getMethod(methodName, params);
+					
+
+					
 					return m.invoke(o, args);
 				}
 			}
@@ -444,7 +476,8 @@ public class ManagedObjectController {
 			return Response
 					.status(405)
 					.entity(new RESTCustomResponse("notAllowed",
-							"this method is not allowed for the current object type")).build();
+							"this method is not allowed for the current object type"))
+					.build();
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -1,4 +1,4 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import com.vmware.vim25.mo.EnvironmentBrowser;
 import com.vmware.vsphere.rest.helpers.FieldGet;

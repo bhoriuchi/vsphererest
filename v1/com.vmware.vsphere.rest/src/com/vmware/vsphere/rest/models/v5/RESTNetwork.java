@@ -1,66 +1,48 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import com.vmware.vim25.ComputeResourceConfigInfo;
-import com.vmware.vim25.ComputeResourceSummary;
-import com.vmware.vim25.mo.ComputeResource;
+import com.vmware.vim25.NetworkSummary;
+import com.vmware.vim25.mo.Network;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
-public class RESTComputeResource extends RESTManagedEntity {
+public class RESTNetwork extends RESTManagedEntity {
 	
-	private ComputeResourceConfigInfo configurationEx;
-	private List<String> datastore;
-	private String environmentBrowser;
 	private List<String> host;
-	private List<String> network;
-	private String resourcePool;
-	private ComputeResourceSummary summary;
+	private NetworkSummary summary;
+	private List<String> vm;
 	
 	// constructor
-	public RESTComputeResource() {
+	public RESTNetwork() {
 	}
 
 	// overloaded constructor
-	public RESTComputeResource(ComputeResource mo, String uri, String fields) {
+	public RESTNetwork(Network mo, String uri, String fields) {
 		this.init(mo, uri, fields);
 	}
 
-	public void init(ComputeResource mo, String uri, String fields) {
+	public void init(Network mo, String uri, String fields) {
+
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
 		try {
 			
-			// compute resource specific fields
-			if (fg.get("configurationEx", fields)) {
-				this.setConfigurationEx(mo.getConfigurationEx());
-			}		
-			if (fg.get("datastore", fields)) {
-				this.setDatastore(new ManagedObjectReferenceArray().getMORArray(mo.getDatastores(), uri));
-			}
-			if (fg.get("environmentBrowser", fields)) {
-				
-				this.setEnvironmentBrowser(new ManagedObjectReferenceUri().getUri(mo.getEnvironmentBrowser(), uri));
-			}			
+			// specific fields			
 			if (fg.get("host", fields)) {
 				this.setHost(new ManagedObjectReferenceArray().getMORArray(mo.getHosts(), uri));
-			}
-			if (fg.get("network", fields)) {
-				this.setNetwork(new ManagedObjectReferenceArray().getMORArray(mo.getNetworks(), uri));
-			}
-			if (fg.get("resourcePool", fields)) {
-				this.setResourcePool(new ManagedObjectReferenceUri().getUri(mo.getResourcePool(), uri));
 			}
 			if (fg.get("summary", fields)) {
 				this.setSummary(mo.getSummary());
 			}
+			if (fg.get("vm", fields)) {
+				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVms(), uri));
+			}
 
-			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
 				this.setId(mo.getMOR().getVal());
@@ -128,78 +110,6 @@ public class RESTComputeResource extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-	
-
-	/**
-	 * @return the configurationEx
-	 */
-	public ComputeResourceConfigInfo getConfigurationEx() {
-		return configurationEx;
-	}
-
-	/**
-	 * @param configurationEx the configurationEx to set
-	 */
-	public void setConfigurationEx(ComputeResourceConfigInfo configurationEx) {
-		this.configurationEx = configurationEx;
-	}
-
-	/**
-	 * @return the datastore
-	 */
-	public List<String> getDatastore() {
-		return datastore;
-	}
-
-	/**
-	 * @param datastore the datastore to set
-	 */
-	public void setDatastore(List<String> datastore) {
-		this.datastore = datastore;
-	}
-
-	/**
-	 * @return the environmentBrowser
-	 */
-	public String getEnvironmentBrowser() {
-		return environmentBrowser;
-	}
-
-	/**
-	 * @param environmentBrowser the environmentBrowser to set
-	 */
-	public void setEnvironmentBrowser(String environmentBrowser) {
-		this.environmentBrowser = environmentBrowser;
-	}
-
-	/**
-	 * @return the network
-	 */
-	public List<String> getNetwork() {
-		return network;
-	}
-
-	/**
-	 * @param network the network to set
-	 */
-	public void setNetwork(List<String> network) {
-		this.network = network;
-	}
-
-	/**
-	 * @return the resourcePool
-	 */
-	public String getResourcePool() {
-		return resourcePool;
-	}
-
-	/**
-	 * @param resourcePool the resourcePool to set
-	 */
-	public void setResourcePool(String resourcePool) {
-		this.resourcePool = resourcePool;
-	}
-
 	/**
 	 * @return the host
 	 */
@@ -217,17 +127,29 @@ public class RESTComputeResource extends RESTManagedEntity {
 	/**
 	 * @return the summary
 	 */
-	public ComputeResourceSummary getSummary() {
+	public NetworkSummary getSummary() {
 		return summary;
 	}
 
 	/**
 	 * @param summary the summary to set
 	 */
-	public void setSummary(ComputeResourceSummary summary) {
+	public void setSummary(NetworkSummary summary) {
 		this.summary = summary;
 	}
 
+	/**
+	 * @return the vm
+	 */
+	public List<String> getVm() {
+		return vm;
+	}
 
+	/**
+	 * @param vm the vm to set
+	 */
+	public void setVm(List<String> vm) {
+		this.vm = vm;
+	}
 
 }

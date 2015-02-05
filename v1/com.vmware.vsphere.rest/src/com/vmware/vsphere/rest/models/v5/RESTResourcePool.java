@@ -1,68 +1,69 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import com.vmware.vim25.DatastoreCapability;
-import com.vmware.vim25.DatastoreHostMount;
-import com.vmware.vim25.DatastoreInfo;
-import com.vmware.vim25.DatastoreSummary;
-import com.vmware.vim25.StorageIORMInfo;
-import com.vmware.vim25.mo.Datastore;
+import com.vmware.vim25.ResourceConfigSpec;
+import com.vmware.vim25.ResourcePoolRuntimeInfo;
+import com.vmware.vim25.ResourcePoolSummary;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
-public class RESTDatastore extends RESTManagedEntity {
+public class RESTResourcePool extends RESTManagedEntity {
 	
-	private String browser;
-	private DatastoreCapability capability;
-	private DatastoreHostMount[] host;
-	private DatastoreInfo info;
-	private StorageIORMInfo iormConfiguration;
-	private DatastoreSummary summary;
+	private ResourceConfigSpec[] childConfiguration;
+	private ResourceConfigSpec config;
+	private String owner;
+	private List<String> resourcePool;
+	private ResourcePoolRuntimeInfo runtime;
+	private ResourcePoolSummary summary;
 	private List<String> vm;
 	
 	// constructor
-	public RESTDatastore() {
+	public RESTResourcePool() {
 	}
 
 	// overloaded constructor
-	public RESTDatastore(Datastore mo, String uri, String fields) {
+	public RESTResourcePool(ResourcePool mo, String uri, String fields) {
 		this.init(mo, uri, fields);
 	}
-
-	public void init(Datastore mo, String uri, String fields) {
+	
+	public void init(ResourcePool mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
 		try {
 			
-			// datastore specific fields
-			if (fg.get("browser", fields)) {
-				this.setBrowser(new ManagedObjectReferenceUri().getUri(mo.getBrowser(), uri));
+			// specific fields
+			if (fg.get("childConfiguration", fields)) {
+				this.setChildConfiguration(mo.getChildConfiguration());
 			}		
-			if (fg.get("capability", fields)) {
-				this.setCapability(mo.getCapability());
+			if (fg.get("config", fields)) {
+				this.setConfig(mo.getConfig());
 			}
-			if (fg.get("host", fields)) {
-				this.setHost(mo.getHost());
+			if (fg.get("owner", fields)) {
+				this.setOwner(new ManagedObjectReferenceUri().getUri(mo.getOwner(), uri));
 			}			
-			if (fg.get("info", fields)) {
-				this.setInfo(mo.getInfo());
+			if (fg.get("resourcePool", fields)) {
+				this.setResourcePool(new ManagedObjectReferenceArray().getMORArray(mo.getResourcePools(), uri));
 			}
-			if (fg.get("iormConfiguration", fields)) {
-				this.setIormConfiguration(mo.getIormConfiguration());
+			if (fg.get("runtime", fields)) {
+				this.setRuntime(mo.getRuntime());
 			}
 			if (fg.get("summary", fields)) {
 				this.setSummary(mo.getSummary());
 			}
 			if (fg.get("vm", fields)) {
-				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVms(), uri));
+				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVMs(), uri));
 			}
 			
-
+			
+			
+			
+			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
 				this.setId(mo.getMOR().getVal());
@@ -130,88 +131,88 @@ public class RESTDatastore extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
-	 * @return the capability
+	 * @return the childConfiguration
 	 */
-	public DatastoreCapability getCapability() {
-		return capability;
+	public ResourceConfigSpec[] getChildConfiguration() {
+		return childConfiguration;
 	}
 
 	/**
-	 * @param capability the capability to set
+	 * @param childConfiguration the childConfiguration to set
 	 */
-	public void setCapability(DatastoreCapability capability) {
-		this.capability = capability;
+	public void setChildConfiguration(ResourceConfigSpec[] childConfiguration) {
+		this.childConfiguration = childConfiguration;
 	}
 
 	/**
-	 * @return the browser
+	 * @return the config
 	 */
-	public String getBrowser() {
-		return browser;
+	public ResourceConfigSpec getConfig() {
+		return config;
 	}
 
 	/**
-	 * @param browser the browser to set
+	 * @param config the config to set
 	 */
-	public void setBrowser(String browser) {
-		this.browser = browser;
+	public void setConfig(ResourceConfigSpec config) {
+		this.config = config;
 	}
 
 	/**
-	 * @return the host
+	 * @return the owner
 	 */
-	public DatastoreHostMount[] getHost() {
-		return host;
+	public String getOwner() {
+		return owner;
 	}
 
 	/**
-	 * @param host the host to set
+	 * @param owner the owner to set
 	 */
-	public void setHost(DatastoreHostMount[] host) {
-		this.host = host;
+	public void setOwner(String owner) {
+		this.owner = owner;
 	}
 
 	/**
-	 * @return the info
+	 * @return the resourcePool
 	 */
-	public DatastoreInfo getInfo() {
-		return info;
+	public List<String> getResourcePool() {
+		return resourcePool;
 	}
 
 	/**
-	 * @param info the info to set
+	 * @param resourcePool the resourcePool to set
 	 */
-	public void setInfo(DatastoreInfo info) {
-		this.info = info;
+	public void setResourcePool(List<String> resourcePool) {
+		this.resourcePool = resourcePool;
 	}
 
 	/**
-	 * @return the iormConfiguration
+	 * @return the runtime
 	 */
-	public StorageIORMInfo getIormConfiguration() {
-		return iormConfiguration;
+	public ResourcePoolRuntimeInfo getRuntime() {
+		return runtime;
 	}
 
 	/**
-	 * @param iormConfiguration the iormConfiguration to set
+	 * @param runtime the runtime to set
 	 */
-	public void setIormConfiguration(StorageIORMInfo iormConfiguration) {
-		this.iormConfiguration = iormConfiguration;
+	public void setRuntime(ResourcePoolRuntimeInfo runtime) {
+		this.runtime = runtime;
 	}
 
 	/**
 	 * @return the summary
 	 */
-	public DatastoreSummary getSummary() {
+	public ResourcePoolSummary getSummary() {
 		return summary;
 	}
 
 	/**
 	 * @param summary the summary to set
 	 */
-	public void setSummary(DatastoreSummary summary) {
+	public void setSummary(ResourcePoolSummary summary) {
 		this.summary = summary;
 	}
 
@@ -228,7 +229,6 @@ public class RESTDatastore extends RESTManagedEntity {
 	public void setVm(List<String> vm) {
 		this.vm = vm;
 	}
-
 
 
 }

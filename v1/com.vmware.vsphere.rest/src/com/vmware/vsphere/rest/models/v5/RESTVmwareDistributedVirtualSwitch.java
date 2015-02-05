@@ -1,43 +1,51 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
-import java.util.List;
 
-import com.vmware.vim25.mo.Folder;
+import com.vmware.vim25.mo.VmwareDistributedVirtualSwitch;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
-public class RESTFolder extends RESTManagedEntity {
-	
-	private List<String> childEntity;
-	private String[] childType;
+public class RESTVmwareDistributedVirtualSwitch extends RESTDistributedVirtualSwitch {
 	
 	// constructor
-	public RESTFolder() {
+	public RESTVmwareDistributedVirtualSwitch() {
 	}
 
 	// overloaded constructor
-	public RESTFolder(Folder mo, String uri, String fields) {
+	public RESTVmwareDistributedVirtualSwitch(VmwareDistributedVirtualSwitch mo, String uri, String fields) {
 		this.init(mo, uri, fields);
 	}
 
-	public void init(Folder mo, String uri, String fields) {
+	public void init(VmwareDistributedVirtualSwitch mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
 		try {
 			
 			// specific fields			
-			if (fg.get("childEntity", fields)) {
-				this.setChildEntity(new ManagedObjectReferenceArray().getMORArray(mo.getChildEntity(), uri));
+			if (fg.get("capability", fields)) {
+				this.setCapability(mo.getCapability());
 			}
-			if (fg.get("childType", fields)) {
-				this.setChildType(mo.getChildType());
+			if (fg.get("config", fields)) {
+				this.setConfig(mo.getConfig());
+			}
+			if (fg.get("networkResourcePool", fields)) {
+				this.setNetworkResourcePool(mo.getNetworkResourcePool());
+			}
+			if (fg.get("portgroup", fields)) {
+				this.setPortgroup(new ManagedObjectReferenceArray().getMORArray(mo.getPortgroup(), uri));
+			}
+			if (fg.get("summary", fields)) {
+				this.setSummary(mo.getSummary());
+			}
+			if (fg.get("uuid", fields)) {
+				this.setUuid(mo.getUuid());
 			}
 			
-
+			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
 				this.setId(mo.getMOR().getVal());
@@ -105,35 +113,4 @@ public class RESTFolder extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * @return the childEntity
-	 */
-	public List<String> getChildEntity() {
-		return childEntity;
-	}
-
-	/**
-	 * @param childEntity the childEntity to set
-	 */
-	public void setChildEntity(List<String> childEntity) {
-		this.childEntity = childEntity;
-	}
-
-	/**
-	 * @return the childType
-	 */
-	public String[] getChildType() {
-		return childType;
-	}
-
-	/**
-	 * @param childType the childType to set
-	 */
-	public void setChildType(String[] childType) {
-		this.childType = childType;
-	}
-
-
-
 }

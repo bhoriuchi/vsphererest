@@ -1,68 +1,65 @@
-package com.vmware.vsphere.rest.models;
+package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import com.vmware.vim25.ResourceConfigSpec;
-import com.vmware.vim25.ResourcePoolRuntimeInfo;
-import com.vmware.vim25.ResourcePoolSummary;
-import com.vmware.vim25.mo.ResourcePool;
+import com.vmware.vim25.ComputeResourceConfigInfo;
+import com.vmware.vim25.ComputeResourceSummary;
+import com.vmware.vim25.mo.ComputeResource;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
-public class RESTResourcePool extends RESTManagedEntity {
+public class RESTComputeResource extends RESTManagedEntity {
 	
-	private ResourceConfigSpec[] childConfiguration;
-	private ResourceConfigSpec config;
-	private String owner;
-	private List<String> resourcePool;
-	private ResourcePoolRuntimeInfo runtime;
-	private ResourcePoolSummary summary;
-	private List<String> vm;
+	private ComputeResourceConfigInfo configurationEx;
+	private List<String> datastore;
+	private String environmentBrowser;
+	private List<String> host;
+	private List<String> network;
+	private String resourcePool;
+	private ComputeResourceSummary summary;
 	
 	// constructor
-	public RESTResourcePool() {
+	public RESTComputeResource() {
 	}
 
 	// overloaded constructor
-	public RESTResourcePool(ResourcePool mo, String uri, String fields) {
+	public RESTComputeResource(ComputeResource mo, String uri, String fields) {
 		this.init(mo, uri, fields);
 	}
-	
-	public void init(ResourcePool mo, String uri, String fields) {
+
+	public void init(ComputeResource mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 		
 		try {
 			
-			// specific fields
-			if (fg.get("childConfiguration", fields)) {
-				this.setChildConfiguration(mo.getChildConfiguration());
+			// compute resource specific fields
+			if (fg.get("configurationEx", fields)) {
+				this.setConfigurationEx(mo.getConfigurationEx());
 			}		
-			if (fg.get("config", fields)) {
-				this.setConfig(mo.getConfig());
+			if (fg.get("datastore", fields)) {
+				this.setDatastore(new ManagedObjectReferenceArray().getMORArray(mo.getDatastores(), uri));
 			}
-			if (fg.get("owner", fields)) {
-				this.setOwner(new ManagedObjectReferenceUri().getUri(mo.getOwner(), uri));
+			if (fg.get("environmentBrowser", fields)) {
+				
+				this.setEnvironmentBrowser(new ManagedObjectReferenceUri().getUri(mo.getEnvironmentBrowser(), uri));
 			}			
-			if (fg.get("resourcePool", fields)) {
-				this.setResourcePool(new ManagedObjectReferenceArray().getMORArray(mo.getResourcePools(), uri));
+			if (fg.get("host", fields)) {
+				this.setHost(new ManagedObjectReferenceArray().getMORArray(mo.getHosts(), uri));
 			}
-			if (fg.get("runtime", fields)) {
-				this.setRuntime(mo.getRuntime());
+			if (fg.get("network", fields)) {
+				this.setNetwork(new ManagedObjectReferenceArray().getMORArray(mo.getNetworks(), uri));
+			}
+			if (fg.get("resourcePool", fields)) {
+				this.setResourcePool(new ManagedObjectReferenceUri().getUri(mo.getResourcePool(), uri));
 			}
 			if (fg.get("summary", fields)) {
 				this.setSummary(mo.getSummary());
 			}
-			if (fg.get("vm", fields)) {
-				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVMs(), uri));
-			}
-			
-			
-			
-			
+
 			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
@@ -131,104 +128,106 @@ public class RESTResourcePool extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
+	
 
 	/**
-	 * @return the childConfiguration
+	 * @return the configurationEx
 	 */
-	public ResourceConfigSpec[] getChildConfiguration() {
-		return childConfiguration;
+	public ComputeResourceConfigInfo getConfigurationEx() {
+		return configurationEx;
 	}
 
 	/**
-	 * @param childConfiguration the childConfiguration to set
+	 * @param configurationEx the configurationEx to set
 	 */
-	public void setChildConfiguration(ResourceConfigSpec[] childConfiguration) {
-		this.childConfiguration = childConfiguration;
+	public void setConfigurationEx(ComputeResourceConfigInfo configurationEx) {
+		this.configurationEx = configurationEx;
 	}
 
 	/**
-	 * @return the config
+	 * @return the datastore
 	 */
-	public ResourceConfigSpec getConfig() {
-		return config;
+	public List<String> getDatastore() {
+		return datastore;
 	}
 
 	/**
-	 * @param config the config to set
+	 * @param datastore the datastore to set
 	 */
-	public void setConfig(ResourceConfigSpec config) {
-		this.config = config;
+	public void setDatastore(List<String> datastore) {
+		this.datastore = datastore;
 	}
 
 	/**
-	 * @return the owner
+	 * @return the environmentBrowser
 	 */
-	public String getOwner() {
-		return owner;
+	public String getEnvironmentBrowser() {
+		return environmentBrowser;
 	}
 
 	/**
-	 * @param owner the owner to set
+	 * @param environmentBrowser the environmentBrowser to set
 	 */
-	public void setOwner(String owner) {
-		this.owner = owner;
+	public void setEnvironmentBrowser(String environmentBrowser) {
+		this.environmentBrowser = environmentBrowser;
+	}
+
+	/**
+	 * @return the network
+	 */
+	public List<String> getNetwork() {
+		return network;
+	}
+
+	/**
+	 * @param network the network to set
+	 */
+	public void setNetwork(List<String> network) {
+		this.network = network;
 	}
 
 	/**
 	 * @return the resourcePool
 	 */
-	public List<String> getResourcePool() {
+	public String getResourcePool() {
 		return resourcePool;
 	}
 
 	/**
 	 * @param resourcePool the resourcePool to set
 	 */
-	public void setResourcePool(List<String> resourcePool) {
+	public void setResourcePool(String resourcePool) {
 		this.resourcePool = resourcePool;
 	}
 
 	/**
-	 * @return the runtime
+	 * @return the host
 	 */
-	public ResourcePoolRuntimeInfo getRuntime() {
-		return runtime;
+	public List<String> getHost() {
+		return host;
 	}
 
 	/**
-	 * @param runtime the runtime to set
+	 * @param host the host to set
 	 */
-	public void setRuntime(ResourcePoolRuntimeInfo runtime) {
-		this.runtime = runtime;
+	public void setHost(List<String> host) {
+		this.host = host;
 	}
 
 	/**
 	 * @return the summary
 	 */
-	public ResourcePoolSummary getSummary() {
+	public ComputeResourceSummary getSummary() {
 		return summary;
 	}
 
 	/**
 	 * @param summary the summary to set
 	 */
-	public void setSummary(ResourcePoolSummary summary) {
+	public void setSummary(ComputeResourceSummary summary) {
 		this.summary = summary;
 	}
 
-	/**
-	 * @return the vm
-	 */
-	public List<String> getVm() {
-		return vm;
-	}
-
-	/**
-	 * @param vm the vm to set
-	 */
-	public void setVm(List<String> vm) {
-		this.vm = vm;
-	}
 
 
 }
