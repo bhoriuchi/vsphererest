@@ -27,13 +27,8 @@ public class RESTEnvironmentBrowser extends RESTManagedObject {
 		}		
 
 
-		// extended from RESTManagedObject
-		if (fg.get("id", fields)) {
-			this.setId(mo.getMOR().getVal());
-		}
-		if (fg.get("moRef", fields)) {
-			this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
-		}
+		// set the extended properties
+		this.setManagedObject(mo, fields, uri);
 	}
 
 	/**

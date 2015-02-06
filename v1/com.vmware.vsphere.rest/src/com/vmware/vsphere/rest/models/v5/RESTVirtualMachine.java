@@ -110,65 +110,8 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 			}
 
 
-			// extended from RESTManagedObject
-			if (fg.get("id", fields)) {
-				this.setId(mo.getMOR().getVal());
-			}
-			if (fg.get("moRef", fields)) {
-				this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
-			}
-			
-			// extended from RESTExtensibleManagedObject
-			if (fg.get("availableField", fields)) {
-				this.setAvailableField(mo.getAvailableField());
-			}		
-			if (fg.get("value", fields)) {
-				this.setValue(mo.getValues());
-			}			
-			
-			// extended from RESTManagedEntity
-			if (fg.get("alarmActionsEnabled", fields)) {
-				this.setAlarmActionsEnabled(mo.getAlarmActionEabled());
-			}
-			if (fg.get("configIssue", fields)) {
-				this.setConfigIssue(mo.getConfigIssue());
-			}
-			if (fg.get("configStatus", fields)) {
-				this.setConfigStatus(mo.getConfigStatus());
-			}
-			if (fg.get("customValue", fields)) {
-				this.setCustomValue(mo.getCustomValue());
-			}
-			if (fg.get("declaredAlarmState", fields)) {
-				this.setDeclaredAlarmState(mo.getDeclaredAlarmState());
-			}
-			if (fg.get("disabledMethod", fields)) {
-				this.setDisabledMethod(mo.getDisabledMethod());
-			}
-			if (fg.get("effectiveRole", fields)) {
-				this.setEffectiveRole(mo.getEffectiveRole());
-			}
-			if (fg.get("name", fields)) {
-				this.setName(mo.getName());
-			}
-			if (fg.get("overallStatus", fields)) {
-				this.setOverallStatus(mo.getOverallStatus());
-			}
-			if (fg.get("parent", fields)) {
-				this.setParent(new ManagedObjectReferenceUri().getUri(mo.getParent(), uri));
-			}
-			if (fg.get("permission", fields)) {
-				this.setPermission(mo.getPermission());
-			}
-			if (fg.get("recentTask", fields)) {
-				this.setRecentTask(new ManagedObjectReferenceArray().getMORArray(mo.getRecentTasks(), uri));
-			}
-			if (fg.get("tag", fields)) {
-				this.setTag(mo.getTag());
-			}
-			if (fg.get("triggeredAlarmState", fields)) {
-				this.setTriggeredAlarmState(mo.getTriggeredAlarmState());
-			}		
+			// set the extended properties
+			this.setManagedEntity(mo, fields, uri);
 
 		} catch (RemoteException | InvocationTargetException | NoSuchMethodException e) {
 			// TODO Auto-generated catch block

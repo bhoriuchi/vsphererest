@@ -1,7 +1,6 @@
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
-import java.rmi.RemoteException;
 import java.util.List;
 
 import com.vmware.vim25.DVSCapability;
@@ -11,7 +10,6 @@ import com.vmware.vim25.DVSRuntimeInfo;
 import com.vmware.vim25.DVSSummary;
 import com.vmware.vim25.mo.DistributedVirtualSwitch;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
-import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 
 public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
@@ -60,69 +58,12 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 			}
 			
 			
-			// extended from RESTManagedObject
-			if (fg.get("id", fields)) {
-				this.setId(mo.getMOR().getVal());
-			}
-			if (fg.get("moRef", fields)) {
-				this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
-			}
-			
-			// extended from RESTExtensibleManagedObject
-			if (fg.get("availableField", fields)) {
-				this.setAvailableField(mo.getAvailableField());
-			}		
-			if (fg.get("value", fields)) {
-				this.setValue(mo.getValues());
-			}			
-			
-			// extended from RESTManagedEntity
-			if (fg.get("alarmActionsEnabled", fields)) {
-				this.setAlarmActionsEnabled(mo.getAlarmActionEabled());
-			}
-			if (fg.get("configIssue", fields)) {
-				this.setConfigIssue(mo.getConfigIssue());
-			}
-			if (fg.get("configStatus", fields)) {
-				this.setConfigStatus(mo.getConfigStatus());
-			}
-			if (fg.get("customValue", fields)) {
-				this.setCustomValue(mo.getCustomValue());
-			}
-			if (fg.get("declaredAlarmState", fields)) {
-				this.setDeclaredAlarmState(mo.getDeclaredAlarmState());
-			}
-			if (fg.get("disabledMethod", fields)) {
-				this.setDisabledMethod(mo.getDisabledMethod());
-			}
-			if (fg.get("effectiveRole", fields)) {
-				this.setEffectiveRole(mo.getEffectiveRole());
-			}
-			if (fg.get("name", fields)) {
-				this.setName(mo.getName());
-			}
-			if (fg.get("overallStatus", fields)) {
-				this.setOverallStatus(mo.getOverallStatus());
-			}
-			if (fg.get("parent", fields)) {
-				this.setParent(new ManagedObjectReferenceUri().getUri(mo.getParent(), uri));
-			}
-			if (fg.get("permission", fields)) {
-				this.setPermission(mo.getPermission());
-			}
-			if (fg.get("recentTask", fields)) {
-				this.setRecentTask(new ManagedObjectReferenceArray().getMORArray(mo.getRecentTasks(), uri));
-			}
-			if (fg.get("tag", fields)) {
-				this.setTag(mo.getTag());
-			}
-			if (fg.get("triggeredAlarmState", fields)) {
-				this.setTriggeredAlarmState(mo.getTriggeredAlarmState());
-			}
+			// set the extended properties
+			this.setManagedEntity(mo, fields, uri);
 
 
 
-		} catch (RemoteException | InvocationTargetException | NoSuchMethodException e) {
+		} catch (InvocationTargetException | NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

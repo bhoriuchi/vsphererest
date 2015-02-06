@@ -7,6 +7,7 @@ import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.mo.VirtualMachineSnapshot;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.FieldGet;
+import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 
 public class RESTVirtualMachineSnapshot extends RESTExtensibleManagedObject {
 	
@@ -41,6 +42,9 @@ public class RESTVirtualMachineSnapshot extends RESTExtensibleManagedObject {
 				this.setConfig(mo.getConfig());
 			}
 			
+			/*
+			 * There seems to be an issue with the VirtualMachineSnapshot object not inheriting its superclasses
+			 */
 			
 			// extended from RESTManagedObject
 			if (fg.get("id", fields)) {
@@ -48,6 +52,10 @@ public class RESTVirtualMachineSnapshot extends RESTExtensibleManagedObject {
 			}
 			if (fg.get("moRef", fields)) {
 				this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
+			}
+			if (fg.get("resource", fields)) {
+				this.setResource(new ManagedObjectReferenceUri().getUri(
+						mo, uri));
 			}
 			
 			// extended from RESTExtensibleManagedObject

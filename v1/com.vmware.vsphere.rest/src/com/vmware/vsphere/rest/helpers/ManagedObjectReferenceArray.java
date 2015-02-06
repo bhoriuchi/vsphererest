@@ -84,7 +84,7 @@ public class ManagedObjectReferenceArray {
 		try {
 			for (ManagedEntity m : mArray) {
 
-				//System.out.println(m.getMOR().getType() + " equals " + vimType.getSimpleName());
+				System.out.println(m.getMOR().getType() + " equals " + vimType.getSimpleName());
 				
 				if (m.getMOR().getType().equals("Folder") && flatten) {
 					mlist = this.flattenFolders((Folder) m, vimType.getSimpleName(), new ArrayList<ManagedEntity>());

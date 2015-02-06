@@ -31,21 +31,8 @@ public class RESTTask extends RESTExtensibleManagedObject {
 				this.setInfo(new RESTTaskInfo(mo.getTaskInfo(), uri, fields));
 			}
 
-			// extended from RESTManagedObject
-			if (fg.get("id", fields)) {
-				this.setId(mo.getMOR().getVal());
-			}
-			if (fg.get("moRef", fields)) {
-				this.setMoRef(mo.getMOR().getType() + "-" + mo.getMOR().getVal());
-			}
-			
-			// extended from RESTExtensibleManagedObject
-			if (fg.get("availableField", fields)) {
-				this.setAvailableField(mo.getAvailableField());
-			}		
-			if (fg.get("value", fields)) {
-				this.setValue(mo.getValues());
-			}			
+			// set the extended properties
+			this.setExtensibleManagedObject(mo, fields, uri);			
 
 
 
