@@ -103,10 +103,8 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 
 			// set the extended properties
 			this.setManagedEntity(mo, fields, uri);
-			
 
-		} catch (InvocationTargetException
-				| NoSuchMethodException e) {
+		} catch (InvocationTargetException | NoSuchMethodException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -152,15 +150,14 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 					}
 
 					Datacenter dc = (Datacenter) m;
+					ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
 
 					ClusterComputeResource mo = dc.getHostFolder()
 							.createCluster(body.getName(),
 									(ClusterConfigSpec) body.getSpec());
-					URI uri = new URI(thisUri
-							+ mo.getMOR().getType().toLowerCase() + "s/"
-							+ mo.getMOR().getVal());
+
 					return Response
-							.created(uri)
+							.created(new URI(moUri.getUri(mo, thisUri)))
 							.entity(new RESTClusterComputeResource(mo, thisUri,
 									fields)).build();
 				}
@@ -176,14 +173,13 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 					.entity(new RESTCustomResponse("duplicateName", body
 							.getName() + " already exists")).build();
 		} catch (RuntimeFault e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
+			return Response.status(400).build();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return Response.status(400).build();
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return Response.status(400).build();
+		} catch (Exception e) {
+			return Response.status(400).build();
 		}
 		return null;
 	}

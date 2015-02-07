@@ -8,12 +8,15 @@ import java.util.Base64.Decoder;
 
 import javax.ws.rs.core.HttpHeaders;
 
+import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.ManagedObject;
 import com.vmware.vim25.mo.ServerConnection;
 import com.vmware.vim25.mo.ServiceInstance;
+import com.vmware.vim25.mo.util.MorUtil;
 
 public class ViConnection {
 
@@ -61,15 +64,17 @@ public class ViConnection {
 			if (this.getSessionKey() != null && this.getSessionKey() != "") {
 				String session = "vmware_soap_session=\""
 						+ this.getSessionKey() + "\"";
-				this.setSi(new ServiceInstance(new URL(this.getSdk()), session, true));
+				this.setSi(new ServiceInstance(new URL(this.getSdk()), session,
+						true));
 			}
 
 			// otherwise try basic authentication
 			else {
 
 				String base64Credentials = null;
-				String authHeader = new HeaderParser().getHeader(headers, HttpHeaders.AUTHORIZATION, basic);
-				
+				String authHeader = new HeaderParser().getHeader(headers,
+						HttpHeaders.AUTHORIZATION, basic);
+
 				if (authHeader != null) {
 					base64Credentials = authHeader.substring(authHeader
 							.indexOf(basic) + basic.length());
@@ -81,8 +86,8 @@ public class ViConnection {
 					final String[] values = credentials.split(":", 2);
 
 					// try to connect and set the service instance
-					this.setSi(new ServiceInstance(new URL(this.getSdk()), values[0],
-							values[1], true));
+					this.setSi(new ServiceInstance(new URL(this.getSdk()),
+							values[0], values[1], true));
 				}
 			}
 
@@ -118,7 +123,8 @@ public class ViConnection {
 
 		try {
 			Folder rootFolder = this.getSi().getRootFolder();
-			return new InventoryNavigator(rootFolder).searchManagedEntities(type);
+			return new InventoryNavigator(rootFolder)
+					.searchManagedEntities(type);
 
 		} catch (NullPointerException | RemoteException e) {
 			// TODO Auto-generated catch block
@@ -137,23 +143,15 @@ public class ViConnection {
 	// get a specific entity
 	public ManagedEntity getEntity(String type, String id) {
 
-		try {
-			Folder rootFolder = this.getSi().getRootFolder();
-			ManagedEntity[] entities = new InventoryNavigator(rootFolder)
-					.searchManagedEntities(type);
-			for (ManagedEntity e : entities) {
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ManagedObjectReference mor = new ManagedObjectReference();
+		mor.setType(type);
+		mor.setVal(moUri.getId(id));
+		
+		ManagedEntity mo = MorUtil.createExactManagedEntity(this.getSi()
+				.getServerConnection(), mor);
 
-				if (e.getMOR().getVal().toLowerCase().equals(id.toLowerCase())) {
-					return e;
-				}
-			}
-
-		} catch (NullPointerException | RemoteException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-		}
-
-		return null;
+		return mo;
 	}
 
 	// get a specific entity with all arguments
@@ -162,24 +160,42 @@ public class ViConnection {
 		getServiceInstance(headers, sessionKey, viServer);
 		return getEntity(type, id);
 	}
-	
-	
+
+	// get a managed object
+	public ManagedObject getManagedObject(String type, String id) {
+
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ManagedObjectReference mor = new ManagedObjectReference();
+		mor.setType(type);
+		mor.setVal(moUri.getId(id));
+		ManagedObject mo = MorUtil.createExactManagedObject(this.getSi()
+				.getServerConnection(), mor);
+
+		return mo;
+	}
+
+	// get a specific object with all arguments
+	public ManagedObject getManagedObject(String type, String id,
+			HttpHeaders headers, String sessionKey, String viServer) {
+		getServiceInstance(headers, sessionKey, viServer);
+		return getManagedObject(type, id);
+	}
+
 	// close a session
 	public void closeSession(boolean force) {
-		
+
 		try {
-			
+
 			if (force || this.getSessionKey() == null) {
-				
+
 				if (this.getSi().getSessionManager() != null) {
 					System.out.println("logging session out");
 					this.getSi().getSessionManager().logout();
-				}
-				else {
+				} else {
 					System.out.println("no session to log out");
 				}
 			}
-			
+
 		} catch (RuntimeFault e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

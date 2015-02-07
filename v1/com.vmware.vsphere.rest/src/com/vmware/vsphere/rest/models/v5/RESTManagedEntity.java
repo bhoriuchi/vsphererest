@@ -110,8 +110,6 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String search, String fieldStr, String thisUri, int start,
 			int position, int results) {
-		
-		System.out.println("trying to getall from " + vimType);
 
 		try {
 
@@ -123,86 +121,21 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 					search, thisUri, fieldStr, position, start, results, false);
 
 			if (m == null) {
-				System.out.println("null response");
 				return Response.status(404).build();
 			} else if (m.size() == 0) {
-				System.out.println("zero size");
 				return Response.status(204).build();
 			} else {
-				System.out.println("building response");
 				return Response.ok().entity(m).build();
 			}
 
 		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
 			// e.printStackTrace();
-			System.out.println("nullpointer");
 		} catch (ClassNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
-		System.out.println("catchall");
-		return Response.status(404).build();
-	}
 
-	/*
-	 * get a specific object of this type by id
-	 */
-	public Response getById(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fieldStr, String thisUri, String id) {
-
-		try {
-
-			// Get the entity that matches the id
-			ManagedEntity m = new ViConnection().getEntity(vimType, id,
-					headers, sessionKey, viServer);
-
-			if (m != null) {
-
-				Class<?> vim = Class.forName(vimClass);
-				Class<?> rest = Class.forName(restClass);
-				Object mo = rest.newInstance();
-
-				// create parameter/argument array and init the rest class
-				Class<?> params[] = { vim, String.class, String.class };
-				Object args[] = { vim.cast(m), thisUri, fieldStr };
-				Method method = rest.getMethod("init", params);
-				method.invoke(mo, args);
-
-				// RESTDatacenter e = new RESTDatacenter((Datacenter) m,
-				// thisUri, fieldStr);
-				return Response.ok().entity(mo).build();
-			} else {
-				return Response.status(404).build();
-			}
-
-		} catch (NullPointerException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-		} catch (ClassNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (InstantiationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IllegalAccessException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (NoSuchMethodException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (SecurityException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IllegalArgumentException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (InvocationTargetException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		return Response.status(404).build();
 	}
 

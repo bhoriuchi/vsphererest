@@ -1,6 +1,8 @@
 package com.vmware.vsphere.rest.helpers;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.vmware.vim25.ManagedObjectReference;
 
@@ -40,5 +42,17 @@ public class ManagedObjectReferenceUri {
 		}
 
 		return ref;
+	}
+	public String getId(String resource) {
+		Pattern p = Pattern.compile("^http?://");
+		Matcher m = p.matcher(resource);
+		
+		if (m.find()) {
+			return resource.substring(resource.lastIndexOf('/'), resource.length());
+		}
+		else {
+			return resource;
+		}
+		
 	}
 }

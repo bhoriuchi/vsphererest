@@ -10,9 +10,12 @@ public class RESTRequestBody {
 	private String moRef;
 	private String datacenter;
 	private String clusterComputeResource;
+	private String hostSystem;
 	private String reference;
 	private Object spec;
 	private String locale;
+	private String type;
+	private String path;
 	
 	/**
 	 * @return the name
@@ -109,5 +112,41 @@ public class RESTRequestBody {
 	 */
 	public void setLocale(String locale) {
 		this.locale = locale;
+	}
+	/**
+	 * @return the type
+	 */
+	public String getType() {
+		return type;
+	}
+	/**
+	 * @param type the type to set
+	 */
+	public void setType(String type) {
+		this.type = type;
+	}
+	/**
+	 * @return the path
+	 */
+	public String getPath() {
+		return path;
+	}
+	/**
+	 * @param path the path to set
+	 */
+	public void setPath(String path) {
+		this.path = path;
+	}
+	/**
+	 * @return the hostSystem
+	 */
+	public String getHostSystem() {
+		return hostSystem;
+	}
+	/**
+	 * @param hostSystem the hostSystem to set
+	 */
+	public void setHostSystem(String hostSystem) {
+		this.hostSystem = hostSystem;
 	}
 }

@@ -32,9 +32,7 @@ public class RESTComputeResource extends RESTManagedEntity {
 	public void init(ComputeResource mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
-		
-		System.out.println("trying to create a compute resource");
-		
+
 		try {
 			
 			// compute resource specific fields

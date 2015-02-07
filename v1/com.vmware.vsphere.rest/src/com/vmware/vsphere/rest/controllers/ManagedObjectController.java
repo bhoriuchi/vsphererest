@@ -35,7 +35,7 @@ public class ManagedObjectController {
 
 	// default values
 	private int maxResults = 100;
-	final static String defaults = "id,name,responseStatus,responseMessage";
+	final static String defaults = "id,name,resource,responseStatus,responseMessage";
 	final static String restPrefix = "REST";
 
 	// API version models
@@ -159,7 +159,7 @@ public class ManagedObjectController {
 	 */
 	@Path("{id}")
 	@PUT
-	@PropertyFiltering(using = "fields", defaults = "id,name,responseStatus,responseMessage")
+	@PropertyFiltering(using = "fields", defaults = defaults)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response putEntity(@Context HttpHeaders headers,
@@ -193,9 +193,6 @@ public class ManagedObjectController {
 				id, fields, objectType);
 
 	}
-
-	// private functions. these have been separated out for versioning and to
-	// limit the amount of redundant code
 
 	/*
 	 * function that gets all entities
@@ -267,6 +264,7 @@ public class ManagedObjectController {
 		Object mo = this.callMethodByName(objectType, "getById", params, args,
 				apiVersion);
 
+		// typecast the object
 		Response r = (Response) mo;
 
 		// if the request was for a child type, try to get the
@@ -462,6 +460,7 @@ public class ManagedObjectController {
 					return m.invoke(o, args);
 				}
 			}
+			return Response.status(404).build();
 
 		} catch (NullPointerException e) {
 			// TODO Auto-generated catch block
@@ -491,45 +490,4 @@ public class ManagedObjectController {
 
 		return null;
 	}
-
-	/*
-	 * @Path("{id}")
-	 * 
-	 * @GET
-	 * 
-	 * @PropertyFiltering(using = "fields", defaults = defaults)
-	 * 
-	 * @Produces(MediaType.APPLICATION_JSON) public ManagedObject
-	 * getEntityById(@Context HttpHeaders headers,
-	 * 
-	 * @PathParam("viServer") String viServer, @PathParam("objectType") String
-	 * objectType,
-	 * 
-	 * @PathParam("id") String id, @QueryParam("fields") String fields) {
-	 * 
-	 * try {
-	 * 
-	 * Reflections reflections = new Reflections("com.vmware.vim25.mo");
-	 * Set<Class<? extends ManagedObject>> allClasses =
-	 * reflections.getSubTypesOf(ManagedObject.class);
-	 * 
-	 * for (Class<?> c : allClasses) { System.out.println(c.getSimpleName()); if
-	 * (c.getSimpleName().toLowerCase().equals(objectType.toLowerCase())) {
-	 * 
-	 * // Create a new MOR and use the MorUtil to create the object
-	 * ManagedObjectReference mor = new ManagedObjectReference();
-	 * mor.setType(c.getSimpleName()); mor.setVal(id); ManagedObject mo =
-	 * MorUtil.createExactManagedObject(new
-	 * ViConnection().getServiceInstance(headers,
-	 * viServer).getServerConnection(), mor);
-	 * 
-	 * if (mo != null) { return mo; } else { return null; } } }
-	 * 
-	 * 
-	 * } catch (NullPointerException e) { // TODO Auto-generated catch block
-	 * e.printStackTrace(); }
-	 * 
-	 * return null; }
-	 */
-
 }

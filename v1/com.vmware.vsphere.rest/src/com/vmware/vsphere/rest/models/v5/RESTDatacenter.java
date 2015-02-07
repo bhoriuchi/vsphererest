@@ -110,14 +110,14 @@ public class RESTDatacenter extends RESTManagedEntity {
 		ViConnection vi = new ViConnection(headers, sessionKey, viServer);
 		ServiceInstance si = vi.getServiceInstance();
 		Folder rootFolder = si.getRootFolder();
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
 
 		try {
 
 			if (body.getName() != null) {
 				Datacenter dc = rootFolder.createDatacenter(body.getName());
-				URI uri = new URI(thisUri + dc.getMOR().getType().toLowerCase()
-						+ "s/" + dc.getMOR().getVal());
-				return Response.created(uri)
+				
+				return Response.created(new URI(moUri.getUri(dc, thisUri)))
 						.entity(new RESTDatacenter(dc, thisUri, fields))
 						.build();
 			} else {
@@ -165,14 +165,13 @@ public class RESTDatacenter extends RESTManagedEntity {
 			if (m != null) {
 
 				Datacenter mo = (Datacenter) m;
+				ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
 
 				// check if a new name was specified
 				if (body.getName() != null) {
 					Task t = mo.rename_Task(body.getName());
-					URI uri = new URI(thisUri
-							+ t.getMOR().getType().toLowerCase() + "s/"
-							+ t.getMOR().getVal());
-					return Response.created(uri)
+
+					return Response.created(new URI(moUri.getUri(t, thisUri)))
 							.entity(new RESTTask(t, thisUri, fields)).build();
 				} else {
 					return Response

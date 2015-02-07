@@ -1,20 +1,31 @@
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.rmi.RemoteException;
 import java.util.List;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
 import com.vmware.vim25.DatastoreCapability;
 import com.vmware.vim25.DatastoreHostMount;
 import com.vmware.vim25.DatastoreInfo;
 import com.vmware.vim25.DatastoreSummary;
+import com.vmware.vim25.HostNasVolumeSpec;
 import com.vmware.vim25.StorageIORMInfo;
+import com.vmware.vim25.VmfsDatastoreCreateSpec;
 import com.vmware.vim25.mo.Datastore;
+import com.vmware.vim25.mo.HostDatastoreSystem;
+import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
+import com.vmware.vsphere.rest.helpers.ViConnection;
 
 public class RESTDatastore extends RESTManagedEntity {
-	
+
 	private String browser;
 	private DatastoreCapability capability;
 	private DatastoreHostMount[] host;
@@ -22,7 +33,7 @@ public class RESTDatastore extends RESTManagedEntity {
 	private StorageIORMInfo iormConfiguration;
 	private DatastoreSummary summary;
 	private List<String> vm;
-	
+
 	// constructor
 	public RESTDatastore() {
 	}
@@ -35,19 +46,20 @@ public class RESTDatastore extends RESTManagedEntity {
 	public void init(Datastore mo, String uri, String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
-		
+
 		try {
-			
+
 			// datastore specific fields
 			if (fg.get("browser", fields)) {
-				this.setBrowser(new ManagedObjectReferenceUri().getUri(mo.getBrowser(), uri));
-			}		
+				this.setBrowser(new ManagedObjectReferenceUri().getUri(
+						mo.getBrowser(), uri));
+			}
 			if (fg.get("capability", fields)) {
 				this.setCapability(mo.getCapability());
 			}
 			if (fg.get("host", fields)) {
 				this.setHost(mo.getHost());
-			}			
+			}
 			if (fg.get("info", fields)) {
 				this.setInfo(mo.getInfo());
 			}
@@ -58,9 +70,9 @@ public class RESTDatastore extends RESTManagedEntity {
 				this.setSummary(mo.getSummary());
 			}
 			if (fg.get("vm", fields)) {
-				this.setVm(new ManagedObjectReferenceArray().getMORArray(mo.getVms(), uri));
+				this.setVm(new ManagedObjectReferenceArray().getMORArray(
+						mo.getVms(), uri));
 			}
-			
 
 			// set the extended properties
 			this.setManagedEntity(mo, fields, uri);
@@ -70,7 +82,69 @@ public class RESTDatastore extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
-	
+
+	/*
+	 * create a new object of this type
+	 */
+	public Response create(String vimType, String vimClass, String restClass,
+			String viServer, HttpHeaders headers, String sessionKey,
+			String fields, String thisUri, RESTRequestBody body) {
+
+		try {
+
+			// get a connection
+			ViConnection vi = new ViConnection(headers, sessionKey, viServer);
+			ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+
+			if (body.getHostSystem() != null && body.getHostSystem() != "") {
+				HostSystem h = (HostSystem) vi.getEntity("HostSystem", body.getHostSystem());
+				Datastore d = null;
+
+				HostDatastoreSystem ds = h.getHostDatastoreSystem();
+				
+				// determine the type of datastore to add
+				if (body.getType() == "local") {
+					if (body.getName() != null && body.getPath() != null) {
+						
+						d = ds.createLocalDatastore(body.getName(), body.getPath());
+					}
+					else {
+						return Response.status(400).entity(new RESTCustomResponse("badRequest", "a required parameter was not specified")).build();
+					}
+				}
+				else if (body.getType() == "nas") {
+					if (body.getSpec() != null) {
+						d = ds.createNasDatastore((HostNasVolumeSpec) body.getSpec());
+					}
+					else {
+						return Response.status(400).entity(new RESTCustomResponse("badRequest", "a required parameter was not specified")).build();					
+					}
+				}
+				else if (body.getType() == "vmfs") {
+					if (body.getSpec() != null) {
+						d = ds.createVmfsDatastore((VmfsDatastoreCreateSpec) body.getSpec());
+					}
+					else {
+						return Response.status(400).entity(new RESTCustomResponse("badRequest", "a required parameter was not specified")).build();					
+					}
+				}
+				
+				return Response.created(new URI(moUri.getUri(d, thisUri)))
+						.entity(new RESTDatastore(d, thisUri, fields))
+						.build();
+			}
+
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
 	/**
 	 * @return the capability
 	 */
@@ -79,7 +153,8 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param capability the capability to set
+	 * @param capability
+	 *            the capability to set
 	 */
 	public void setCapability(DatastoreCapability capability) {
 		this.capability = capability;
@@ -93,7 +168,8 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param browser the browser to set
+	 * @param browser
+	 *            the browser to set
 	 */
 	public void setBrowser(String browser) {
 		this.browser = browser;
@@ -107,7 +183,8 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param host the host to set
+	 * @param host
+	 *            the host to set
 	 */
 	public void setHost(DatastoreHostMount[] host) {
 		this.host = host;
@@ -121,7 +198,8 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param info the info to set
+	 * @param info
+	 *            the info to set
 	 */
 	public void setInfo(DatastoreInfo info) {
 		this.info = info;
@@ -135,7 +213,8 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param iormConfiguration the iormConfiguration to set
+	 * @param iormConfiguration
+	 *            the iormConfiguration to set
 	 */
 	public void setIormConfiguration(StorageIORMInfo iormConfiguration) {
 		this.iormConfiguration = iormConfiguration;
@@ -149,7 +228,8 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param summary the summary to set
+	 * @param summary
+	 *            the summary to set
 	 */
 	public void setSummary(DatastoreSummary summary) {
 		this.summary = summary;
@@ -163,12 +243,11 @@ public class RESTDatastore extends RESTManagedEntity {
 	}
 
 	/**
-	 * @param vm the vm to set
+	 * @param vm
+	 *            the vm to set
 	 */
 	public void setVm(List<String> vm) {
 		this.vm = vm;
 	}
-
-
 
 }
