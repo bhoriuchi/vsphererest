@@ -147,11 +147,16 @@ public class ViConnection {
 		ManagedObjectReference mor = new ManagedObjectReference();
 		mor.setType(type);
 		mor.setVal(moUri.getId(id));
-		
-		ManagedEntity mo = MorUtil.createExactManagedEntity(this.getSi()
-				.getServerConnection(), mor);
 
-		return mo;
+		try {
+			ManagedEntity mo = MorUtil.createExactManagedEntity(this.getSi()
+					.getServerConnection(), mor);
+
+			return mo;
+		} catch (NullPointerException e) {
+
+			return null;
+		}
 	}
 
 	// get a specific entity with all arguments
@@ -224,6 +229,11 @@ public class ViConnection {
 	 * @return the si
 	 */
 	public ServiceInstance getSi() {
+		
+		if (this.si == null) {
+			this.setSi(this.getServiceInstance());
+		}
+		
 		return si;
 	}
 

@@ -3,14 +3,22 @@ package com.vmware.vsphere.rest.models.v5;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+
 import com.vmware.vim25.DVSCapability;
 import com.vmware.vim25.DVSConfigInfo;
 import com.vmware.vim25.DVSNetworkResourcePool;
 import com.vmware.vim25.DVSRuntimeInfo;
 import com.vmware.vim25.DVSSummary;
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.DistributedVirtualSwitch;
+import com.vmware.vim25.mo.Folder;
+import com.vmware.vim25.mo.ServiceInstance;
+import com.vmware.vsphere.rest.helpers.DefaultValuesHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.FieldGet;
+import com.vmware.vsphere.rest.helpers.ViConnection;
 
 public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 	
@@ -68,6 +76,40 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	/*
+	 * create a new object of this type
+	 */
+	public Response create(String vimType, String vimClass, String restClass,
+			String viServer, HttpHeaders headers, String sessionKey,
+			String fields, String thisUri, RESTRequestBody body) {
+		
+		// helps with getting default values if no value is given
+		DefaultValuesHelper h = new DefaultValuesHelper().init();
+		
+		// create a new service instance
+		ViConnection v = new ViConnection(headers, sessionKey, viServer);
+		ServiceInstance si = v.getServiceInstance();
+		Folder f;
+		
+		if (body.getFolder() == null && body.getDatacenter() != null) {
+			
+			Datacenter dc = (Datacenter) v.getEntity("Datacenter", body.getDatacenter());
+			f = dc.getNetworkFolder();
+		}
+		else if (body.getFolder() != null) {
+			
+			f = (Folder) v.getEntity("Folder", body.getFolder());
+		}
+		
+		
+		
+		return null;
+	}
+	
+	
+	
 	
 	/**
 	 * @return the capability

@@ -40,7 +40,7 @@ public class ExampleController {
 		Object o = null;
 		
 		if (objectType != null) {
-			o = this.getExampleEx(objectType, vimModelPackage);
+			o = this.getExampleEx(vimModelPackage + "." + objectType, vimModelPackage);
 		}
 
 		if (o != null) {
@@ -51,10 +51,12 @@ public class ExampleController {
 
 	}
 
+	// recursive function to set sample data for each value
 	private Object getExampleEx(String className, String vimModelPackage) {
 
 		Object o = null;
 		Class<?> t = null;
+		boolean found = false;
 
 		try {
 			
@@ -65,16 +67,14 @@ public class ExampleController {
 
 			// loop through each of the classes
 			for (Class<?> c : allClasses) {
-
-				if (c.getSimpleName().toLowerCase()
+				
+				if (c.getName().toLowerCase()
 						.equals(className.toLowerCase())) {
-					
-					className = c.getSimpleName();
 
+					found = true;
 					
+					// get all the fields in the class
 					o = c.newInstance();
-
-					
 					Field[] fields = o.getClass().getDeclaredFields();
 
 					for (Field field : fields) {
@@ -86,7 +86,8 @@ public class ExampleController {
 						if (declaredType.isArray()) {
 							t = declaredType.getComponentType();
 							isArray = true;
-						} else {
+						} 
+						else {
 							t = declaredType;
 						}
 
@@ -168,10 +169,8 @@ public class ExampleController {
 						else if (t.isEnum()) {
 							
 							field.setAccessible(true);
-							
 							Object[] e = t.getEnumConstants();
-							System.out.println("enum:" + e[0]);
-							
+
 							if (isArray) {
 								
 								Object a = Array.newInstance(t, 2);
@@ -183,14 +182,14 @@ public class ExampleController {
 								field.set(o, e[0]);
 							}
 						}
-						
 						else {
 
 							field.setAccessible(true);
-
+							
+							//System.out.println("Looking for " + field.getName()  + " of type " + t.getName());
 							if (isArray) {
 
-								Object ob = this.getExampleEx(t.getSimpleName(),
+								Object ob = this.getExampleEx(t.getName(),
 										vimModelPackage);
 								Object a = Array.newInstance(t, 2);
 								Array.set(a, 0, ob);
@@ -199,14 +198,21 @@ public class ExampleController {
 
 							} else {
 								
-								field.set(o, this.getExampleEx(t.getSimpleName(),
+								field.set(o, this.getExampleEx(t.getName(),
 										vimModelPackage));
 
 							}
 						}
-					}	
+					}
 				}
 			}
+			
+			// print type if not found
+			if (!found) {
+
+				System.out.println("Cant find " + className);
+			}
+			
 		} catch (InstantiationException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();

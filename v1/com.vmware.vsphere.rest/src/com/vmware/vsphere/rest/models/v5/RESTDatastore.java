@@ -97,41 +97,37 @@ public class RESTDatastore extends RESTManagedEntity {
 			ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
 
 			if (body.getHostSystem() != null && body.getHostSystem() != "") {
-				HostSystem h = (HostSystem) vi.getEntity("HostSystem", body.getHostSystem());
+				HostSystem h = (HostSystem) vi.getEntity("HostSystem",
+						moUri.getId(body.getHostSystem()));
 				Datastore d = null;
 
 				HostDatastoreSystem ds = h.getHostDatastoreSystem();
-				
+
 				// determine the type of datastore to add
-				if (body.getType() == "local") {
-					if (body.getName() != null && body.getPath() != null) {
-						
-						d = ds.createLocalDatastore(body.getName(), body.getPath());
-					}
-					else {
-						return Response.status(400).entity(new RESTCustomResponse("badRequest", "a required parameter was not specified")).build();
-					}
+				if (body.getType() == "local" && body.getName() != null
+						&& body.getPath() != null) {
+
+					d = ds.createLocalDatastore(body.getName(), body.getPath());
+
+				} else if (body.getType() == "nas" && body.getSpec() != null) {
+
+					d = ds.createNasDatastore((HostNasVolumeSpec) body
+							.getSpec());
+
+				} else if (body.getType() == "vmfs" && body.getSpec() != null) {
+					d = ds.createVmfsDatastore((VmfsDatastoreCreateSpec) body
+							.getSpec());
+
+				} else {
+					return Response.status(400).build();
 				}
-				else if (body.getType() == "nas") {
-					if (body.getSpec() != null) {
-						d = ds.createNasDatastore((HostNasVolumeSpec) body.getSpec());
-					}
-					else {
-						return Response.status(400).entity(new RESTCustomResponse("badRequest", "a required parameter was not specified")).build();					
-					}
+
+				// if the datastore is not null then return it as created
+				if (d != null) {
+					return Response.created(new URI(moUri.getUri(d, thisUri)))
+							.entity(new RESTDatastore(d, thisUri, fields))
+							.build();
 				}
-				else if (body.getType() == "vmfs") {
-					if (body.getSpec() != null) {
-						d = ds.createVmfsDatastore((VmfsDatastoreCreateSpec) body.getSpec());
-					}
-					else {
-						return Response.status(400).entity(new RESTCustomResponse("badRequest", "a required parameter was not specified")).build();					
-					}
-				}
-				
-				return Response.created(new URI(moUri.getUri(d, thisUri)))
-						.entity(new RESTDatastore(d, thisUri, fields))
-						.build();
 			}
 
 		} catch (RemoteException e) {
