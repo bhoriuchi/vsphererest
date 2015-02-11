@@ -48,12 +48,12 @@ public class RESTManagedObject {
 			Object m = null;
 			
 			// check for managed entities
-			if (rest.getSuperclass() == RESTManagedEntity.class) {
+			if (RESTManagedEntity.class.isAssignableFrom(rest)) {
 
 				m = new ViConnection().getEntity(vimType, id, headers,
 						sessionKey, viServer);
+				
 			}
-
 			// check for non managed entities
 			else {
 

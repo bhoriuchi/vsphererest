@@ -2,6 +2,7 @@ package com.vmware.vsphere.rest.controllers;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -41,7 +42,7 @@ public class ManagedObjectController {
 	// API version models
 	final static String vim25ModelPackage = "com.vmware.vim25.mo";
 	final static String defaultVimModelPackage = vim25ModelPackage;
-	
+
 	final static String v5ModelPackage = "com.vmware.vsphere.rest.models.v5";
 	final static String defaultModelPackage = v5ModelPackage;
 
@@ -311,11 +312,12 @@ public class ManagedObjectController {
 			// create parameter/argument array
 			Class<?> params[] = { String.class, String.class, String.class,
 					String.class, HttpHeaders.class, String.class,
-					String.class, String.class, String.class, String.class, String.class,
-					RESTRequestBody.class };
+					String.class, String.class, String.class, String.class,
+					String.class, RESTRequestBody.class };
 			Object args[] = { "vimType", "vimClass", "restClass", viServer,
-					headers, sessionKey, apiVersion, fieldStr, thisUri, id, childType, body };
-			
+					headers, sessionKey, apiVersion, fieldStr, thisUri, id,
+					childType, body };
+
 			// call the create method
 			Object r = this.callMethodByName(objectType, "createChild", params,
 					args, apiVersion);
@@ -410,6 +412,11 @@ public class ManagedObjectController {
 	 */
 	private Object callMethodByName(String objectType, String methodName,
 			Class<?> params[], Object args[], String apiVersion) {
+
+		// initialize a custom response
+		RESTCustomResponse cr = new RESTCustomResponse("",
+				new ArrayList<String>());
+
 		try {
 
 			// default model packages. always default to the original version to
@@ -417,10 +424,11 @@ public class ManagedObjectController {
 			String modelPackage = defaultModelPackage;
 			String vimModelPackage = defaultVimModelPackage;
 
-			/* versioning is done by selecting class objects from a specific
+			/*
+			 * versioning is done by selecting class objects from a specific
 			 * package version
 			 */
-			
+
 			// version 5 is the first and indicates compatibility with vSphere 5
 			if (apiVersion == "5") {
 				modelPackage = v5ModelPackage;
@@ -454,9 +462,7 @@ public class ManagedObjectController {
 					// method
 					Object o = c.newInstance();
 					Method m = c.getMethod(methodName, params);
-					
 
-					
 					return m.invoke(o, args);
 				}
 			}
@@ -472,11 +478,13 @@ public class ManagedObjectController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
-			return Response
-					.status(405)
-					.entity(new RESTCustomResponse("notAllowed",
-							"this method is not allowed for the current object type"))
-					.build();
+
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add(
+					"This method is not allowed for the current object type");
+
+			return Response.status(405).entity(cr).build();
+			
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -117,21 +118,40 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
+		// initialize a custom response
+		RESTCustomResponse cr = new RESTCustomResponse("",
+				new ArrayList<String>());
+		
+		
+		if (body == null) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("No message body was specified in the request");
+			
+			return Response.status(400).entity(cr).build();
+		}
+		
 		try {
 
 			// check for name
 			if (body.getName() == null) {
+				
+				cr.setResponseStatus("failed");
+				cr.getResponseMessage().add("Name not specified");
+				
 				return Response
 						.status(400)
-						.entity(new RESTCustomResponse("badRequest",
-								"name not specified")).build();
+						.entity(cr).build();
 			}
 			// check for datacenter
 			else if (body.getDatacenter() == null) {
+				
+				cr.setResponseStatus("failed");
+				cr.getResponseMessage().add("Datacenter not specified");
+				
 				return Response
 						.status(400)
-						.entity(new RESTCustomResponse("badRequest",
-								"datacenter not specified")).build();
+						.entity(cr).build();
 			}
 
 			// create the object
@@ -163,15 +183,21 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 				}
 			}
 		} catch (InvalidName e) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("Invalid name");
+			
 			return Response
 					.status(400)
-					.entity(new RESTCustomResponse("invalidName", body
-							.getName() + " is not a valid name")).build();
+					.entity(cr).build();
 		} catch (DuplicateName e) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("Duplicate name");
+			
 			return Response
 					.status(400)
-					.entity(new RESTCustomResponse("duplicateName", body
-							.getName() + " already exists")).build();
+					.entity(cr).build();
 		} catch (RuntimeFault e) {
 			return Response.status(400).build();
 		} catch (RemoteException e) {

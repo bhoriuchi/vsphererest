@@ -1,20 +1,22 @@
 package com.vmware.vsphere.rest.models.v5;
 
+import java.util.List;
+
 public class RESTCustomResponse {
 	
 	private String responseStatus;
-	private String responseMessage;
+	private List<String> responseMessage;
 	
 	
 	public RESTCustomResponse() {
 	}
 	
-	public RESTCustomResponse(String responseStatus, String responseMessage)
+	public RESTCustomResponse(String responseStatus, List<String> responseMessage)
 	{
 		this.init(responseStatus, responseMessage);
 	}
 	
-	public void init(String responseStatus, String responseMessage) {
+	public void init(String responseStatus, List<String> responseMessage) {
 		this.setResponseStatus(responseStatus);
 		this.setResponseMessage(responseMessage);
 	}
@@ -32,16 +34,18 @@ public class RESTCustomResponse {
 	public void setResponseStatus(String responseStatus) {
 		this.responseStatus = responseStatus;
 	}
+
 	/**
-	 * @return the message
+	 * @return the responseMessage
 	 */
-	public String getResponseMessage() {
+	public List<String> getResponseMessage() {
 		return responseMessage;
 	}
+
 	/**
-	 * @param message the message to set
+	 * @param responseMessage the responseMessage to set
 	 */
-	public void setResponseMessage(String responseMessage) {
+	public void setResponseMessage(List<String> responseMessage) {
 		this.responseMessage = responseMessage;
 	}
 

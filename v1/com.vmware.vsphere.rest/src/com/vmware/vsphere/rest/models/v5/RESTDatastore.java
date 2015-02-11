@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -90,6 +91,18 @@ public class RESTDatastore extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
+		// initialize a custom response
+		RESTCustomResponse cr = new RESTCustomResponse("",
+				new ArrayList<String>());
+		
+		if (body == null) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("No message body was specified in the request");
+			
+			return Response.status(400).entity(cr).build();
+		}
+		
 		try {
 
 			// get a connection

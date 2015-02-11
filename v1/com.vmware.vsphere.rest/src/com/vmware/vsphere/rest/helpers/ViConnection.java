@@ -151,10 +151,18 @@ public class ViConnection {
 		try {
 			ManagedEntity mo = MorUtil.createExactManagedEntity(this.getSi()
 					.getServerConnection(), mor);
+			
+			// call the getAvailableField method to cause an exception on 
+			// managed objects that do not exist
+			mo.getAvailableField();
 
 			return mo;
 		} catch (NullPointerException e) {
 
+			return null;
+		}
+		catch (Exception e) {
+			System.out.println("General Exception: " + e.getMessage());
 			return null;
 		}
 	}

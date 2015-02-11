@@ -32,6 +32,13 @@ public class DefaultValuesHelper {
 		this.d.put("VmwareDistributedVirtualSwitchPvlanSpec", new HashMap<String,Object>());
 		this.d.get("VmwareDistributedVirtualSwitchPvlanSpec").put("inherited", false);
 		
+		// HostConnectSpec
+		this.d.put("HostConnectSpec", new HashMap<String,Object>());
+		this.d.get("HostConnectSpec").put("force", false);
+		this.d.get("HostConnectSpec").put("userName", "root");
+		
+		
+		
 		return this;
 	}
 	

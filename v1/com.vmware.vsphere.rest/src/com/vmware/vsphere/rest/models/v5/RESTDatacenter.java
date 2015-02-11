@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -107,6 +108,18 @@ public class RESTDatacenter extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
+		// initialize a custom response
+		RESTCustomResponse cr = new RESTCustomResponse("",
+				new ArrayList<String>());
+		
+		if (body == null) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("No message body was specified in the request");
+			
+			return Response.status(400).entity(cr).build();
+		}
+		
 		ViConnection vi = new ViConnection(headers, sessionKey, viServer);
 		ServiceInstance si = vi.getServiceInstance();
 		Folder rootFolder = si.getRootFolder();
@@ -121,21 +134,30 @@ public class RESTDatacenter extends RESTManagedEntity {
 						.entity(new RESTDatacenter(dc, thisUri, fields))
 						.build();
 			} else {
+				
+				cr.setResponseStatus("failed");
+				cr.getResponseMessage().add("Name not specified");
+				
 				return Response
 						.status(400)
-						.entity(new RESTCustomResponse("badRequest",
-								"name not specified")).build();
+						.entity(cr).build();
 			}
 		} catch (InvalidName e) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("Invalid name");
+			
 			return Response
 					.status(400)
-					.entity(new RESTCustomResponse("invalidName", body
-							.getName() + " is not a valid name")).build();
+					.entity(cr).build();
 		} catch (DuplicateName e) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("Duplicate name");
+			
 			return Response
 					.status(400)
-					.entity(new RESTCustomResponse("duplicateName", body
-							.getName() + " already exists")).build();
+					.entity(cr).build();
 		} catch (RuntimeFault e) {
 			// TODO Auto-generated catch block
 			// e.printStackTrace();
@@ -156,6 +178,18 @@ public class RESTDatacenter extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, String id, RESTRequestBody body) {
 
+		// initialize a custom response
+		RESTCustomResponse cr = new RESTCustomResponse("",
+				new ArrayList<String>());
+		
+		if (body == null) {
+			
+			cr.setResponseStatus("failed");
+			cr.getResponseMessage().add("No message body was specified in the request");
+			
+			return Response.status(400).entity(cr).build();
+		}
+		
 		try {
 
 			// Get the entity that matches the id
@@ -174,10 +208,13 @@ public class RESTDatacenter extends RESTManagedEntity {
 					return Response.created(new URI(moUri.getUri(t, thisUri)))
 							.entity(new RESTTask(t, thisUri, fields)).build();
 				} else {
+					
+					cr.setResponseStatus("failed");
+					cr.getResponseMessage().add("Missing name value");
+					
 					return Response
 							.status(400)
-							.entity(new RESTCustomResponse("badRequest",
-									"missing new name value")).build();
+							.entity(cr).build();
 				}
 			} else {
 				return Response.status(404).build();

@@ -9,8 +9,8 @@ public class RESTRequestBody {
 	private String id;
 	private String moRef;
 	private String datacenter;
-	private String folder;
 	private String clusterComputeResource;
+	private String resourcePool;
 	private String distributedVirtualSwitch;
 	private String hostSystem;
 	private String reference;
@@ -18,10 +18,25 @@ public class RESTRequestBody {
 	private String locale;
 	private String type;
 	private String path;
+	private String version;
+	private String parentFolder;
+	private String vmFolder;
+	private String vlanTrunk;	
+	private String username;
+	private String password;
+	private String managementIp;
+	private String sslThumbprint;
+	private String license;
+	
+	
+	
 	private int numPorts = -1;
 	private int vlanId = -1;
 	private int pVlanId = -1;
-	private String vlanTrunk;
+
+	private boolean force = false;
+	private boolean asConnected = true;
+	
 	private Object spec;
 	private Object[] specs;	
 	
@@ -242,15 +257,135 @@ public class RESTRequestBody {
 		this.pVlanId = pVlanId;
 	}
 	/**
-	 * @return the folder
+	 * @return the version
 	 */
-	public String getFolder() {
-		return folder;
+	public String getVersion() {
+		return version;
 	}
 	/**
-	 * @param folder the folder to set
+	 * @param version the version to set
 	 */
-	public void setFolder(String folder) {
-		this.folder = folder;
+	public void setVersion(String version) {
+		this.version = version;
+	}
+	/**
+	 * @return the parentFolder
+	 */
+	public String getParentFolder() {
+		return parentFolder;
+	}
+	/**
+	 * @param parentFolder the parentFolder to set
+	 */
+	public void setParentFolder(String parentFolder) {
+		this.parentFolder = parentFolder;
+	}
+	/**
+	 * @return the resourcePool
+	 */
+	public String getResourcePool() {
+		return resourcePool;
+	}
+	/**
+	 * @param resourcePool the resourcePool to set
+	 */
+	public void setResourcePool(String resourcePool) {
+		this.resourcePool = resourcePool;
+	}
+	/**
+	 * @return the username
+	 */
+	public String getUsername() {
+		return username;
+	}
+	/**
+	 * @param username the username to set
+	 */
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	/**
+	 * @return the password
+	 */
+	public String getPassword() {
+		return password;
+	}
+	/**
+	 * @param password the password to set
+	 */
+	public void setPassword(String password) {
+		this.password = password;
+	}
+	/**
+	 * @return the managementIp
+	 */
+	public String getManagementIp() {
+		return managementIp;
+	}
+	/**
+	 * @param managementIp the managementIp to set
+	 */
+	public void setManagementIp(String managementIp) {
+		this.managementIp = managementIp;
+	}
+	/**
+	 * @return the sslThumbprint
+	 */
+	public String getSslThumbprint() {
+		return sslThumbprint;
+	}
+	/**
+	 * @param sslThumbprint the sslThumbprint to set
+	 */
+	public void setSslThumbprint(String sslThumbprint) {
+		this.sslThumbprint = sslThumbprint;
+	}
+	/**
+	 * @return the license
+	 */
+	public String getLicense() {
+		return license;
+	}
+	/**
+	 * @param license the license to set
+	 */
+	public void setLicense(String license) {
+		this.license = license;
+	}
+	/**
+	 * @return the force
+	 */
+	public boolean isForce() {
+		return force;
+	}
+	/**
+	 * @param force the force to set
+	 */
+	public void setForce(boolean force) {
+		this.force = force;
+	}
+	/**
+	 * @return the asConnected
+	 */
+	public boolean isAsConnected() {
+		return asConnected;
+	}
+	/**
+	 * @param asConnected the asConnected to set
+	 */
+	public void setAsConnected(boolean asConnected) {
+		this.asConnected = asConnected;
+	}
+	/**
+	 * @return the vmFolder
+	 */
+	public String getVmFolder() {
+		return vmFolder;
+	}
+	/**
+	 * @param vmFolder the vmFolder to set
+	 */
+	public void setVmFolder(String vmFolder) {
+		this.vmFolder = vmFolder;
 	}
 }

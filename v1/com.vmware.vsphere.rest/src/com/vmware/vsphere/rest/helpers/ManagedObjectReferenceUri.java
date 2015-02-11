@@ -48,7 +48,7 @@ public class ManagedObjectReferenceUri {
 		Matcher m = p.matcher(resource);
 		
 		if (m.find()) {
-			return resource.substring(resource.lastIndexOf('/'), resource.length());
+			return resource.substring(resource.lastIndexOf('/') + 1, resource.length());
 		}
 		else {
 			return resource;
