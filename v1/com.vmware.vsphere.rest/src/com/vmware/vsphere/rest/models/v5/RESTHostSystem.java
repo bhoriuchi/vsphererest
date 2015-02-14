@@ -1,3 +1,32 @@
+/*================================================================================
+Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, 
+this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation 
+and/or other materials provided with the distribution.
+
+* Neither the name of VMware, Inc. nor the names of its contributors may be used
+to endorse or promote products derived from this software without specific prior 
+written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL VMWARE, INC. OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+================================================================================*/
+
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
@@ -16,18 +45,20 @@ import com.vmware.vim25.HostLicensableResourceInfo;
 import com.vmware.vim25.HostListSummary;
 import com.vmware.vim25.HostRuntimeInfo;
 import com.vmware.vim25.HostSystemResourceInfo;
-import com.vmware.vim25.mo.ClusterComputeResource;
-import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
-import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
+
 import com.vmware.vsphere.rest.helpers.DefaultValuesHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
-import com.vmware.vsphere.rest.helpers.ObjectGetter;
 import com.vmware.vsphere.rest.helpers.ViConnection;
+
+/**
+* @author Branden Horiuchi (bhoriuchi@gmail.com)
+* @version 5
+*/
 
 public class RESTHostSystem extends RESTManagedEntity {
 
@@ -134,79 +165,44 @@ public class RESTHostSystem extends RESTManagedEntity {
 		// instantiate helpers
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
 		DefaultValuesHelper h = new DefaultValuesHelper().init();
-		ObjectGetter og = new ObjectGetter();
+		HostConnectSpec spec = new HostConnectSpec();
 
 		// create a new service instance
 		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Task t = null;
 
-		if (!og.getEntity((body.getClusterComputeResource() != null),
-				"ClusterComputeResource",
-				body.getClusterComputeResource(), v, cr).isFailed()) {
+		if (body.getName() != null) {
 
-			ClusterComputeResource cl = (ClusterComputeResource) og.getObj();
-			HostConnectSpec spec = new HostConnectSpec();
-			
-			// set the hostName parameter
-			og.invoke((body.getName() != null), spec, HostConnectSpec.class, "setHostName", body.getName(), String.class, v, cr);
-			
-			// set the force parameter
-			og.invoke(!og.isFailed(), og.getObj(), HostConnectSpec.class, "setForce", h.set("HostConnectSpec", "force",
-						body.isForce()), boolean.class, v, cr);
-			
-			// set the username parameter
-			og.invoke(!og.isFailed(), og.getObj(), HostConnectSpec.class, "setUserName", h.set("HostConnectSpec", "userName",
-						body.getUsername()), String.class, v, cr);			
-			
-			// set the password parameter
-			og.invoke(!og.isFailed(), og.getObj(), HostConnectSpec.class, "setPassword", body.getPassword(), String.class, v, cr);	
-			
-			// set the managementIp parameter
-			og.invoke(!og.isFailed(), og.getObj(), HostConnectSpec.class, "setManagementIp", body.getManagementIp(), String.class, v, cr);	
-			
-			// set the SSL Thumbprint parameter
-			og.invoke(!og.isFailed(), og.getObj(), HostConnectSpec.class, "setSslThumbprint", body.getSslThumbprint(), String.class, v, cr);				
-			
-			
-			if (body.getName() != null) {
+			// create a new spec
 
-				// create a new spec
-				
+			// set mandatory values
+			spec.setForce((boolean) h.set("HostConnectSpec", "force",
+					body.isForce()));
+			spec.setHostName(body.getName());
+			spec.setUserName((String) h.set("HostConnectSpec", "userName",
+					body.getUsername()));
 
-				// set mandatory values
-				//spec.setForce((boolean) h.set("HostConnectSpec", "force",
-				//		body.isForce()));
-				//spec.setHostName(body.getName());
-				//spec.setUserName( (String) h.set("HostConnectSpec", "userName",
-				//		body.getUsername()));
+			if (body.getPassword() != null) {
+				spec.setPassword(body.getPassword());
+			}
 
-				//if (body.getPassword() != null) {
-				//	spec.setPassword(body.getPassword());
-				//}
+			// optional values
+			if (body.getManagementIp() != null) {
+				spec.setManagementIp(body.getManagementIp());
+			}
+			if (body.getSslThumbprint() != null) {
+				spec.setSslThumbprint(body.getSslThumbprint());
+			}
+			if (body.getVmFolder() != null) {
+				Folder f = (Folder) v.getEntity("Folder", body.getVmFolder());
 
-				// optional values
-				//if (body.getManagementIp() != null) {
-				//	spec.setManagementIp(body.getManagementIp());
-				//}
-				//if (body.getSslThumbprint() != null) {
-				//	spec.setSslThumbprint(body.getSslThumbprint());
-				//}
-				if (body.getVmFolder() != null) {
-					Folder f = (Folder) v.getEntity("Folder",
-							body.getVmFolder());
-
-					if (f != null) {
-						spec.setVmFolder(f.getMOR());
-					}
+				if (f != null) {
+					spec.setVmFolder(f.getMOR());
 				}
-
 			}
 
 		}
-		
-		
-		
-		
+
 		return null;
 
 	}

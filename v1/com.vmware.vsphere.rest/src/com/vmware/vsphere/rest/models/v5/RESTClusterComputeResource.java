@@ -1,10 +1,37 @@
+/*================================================================================
+Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, 
+this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation 
+and/or other materials provided with the distribution.
+
+* Neither the name of VMware, Inc. nor the names of its contributors may be used
+to endorse or promote products derived from this software without specific prior 
+written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL VMWARE, INC. OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+================================================================================*/
+
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -18,14 +45,19 @@ import com.vmware.vim25.ClusterDrsRecommendation;
 import com.vmware.vim25.ClusterRecommendation;
 import com.vmware.vim25.DuplicateName;
 import com.vmware.vim25.InvalidName;
-import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.ClusterComputeResource;
 import com.vmware.vim25.mo.Datacenter;
-import com.vmware.vim25.mo.ManagedEntity;
+
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ViConnection;
+
+/**
+* @author Branden Horiuchi (bhoriuchi@gmail.com)
+* @version 5
+*/
 
 public class RESTClusterComputeResource extends RESTComputeResource {
 
@@ -118,95 +150,73 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-		
-		
-		if (body == null) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
-			return Response.status(400).entity(cr).build();
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ViConnection v = new ViConnection(headers, sessionKey, viServer);
+		ClusterComputeResource mo = null;
+
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
 		}
-		
+
+		// attempt to create
 		try {
 
-			// check for name
-			if (body.getName() == null) {
-				
-				cr.setResponseStatus("failed");
-				cr.getResponseMessage().add("Name not specified");
-				
-				return Response
-						.status(400)
-						.entity(cr).build();
-			}
-			// check for datacenter
-			else if (body.getDatacenter() == null) {
-				
-				cr.setResponseStatus("failed");
-				cr.getResponseMessage().add("Datacenter not specified");
-				
-				return Response
-						.status(400)
-						.entity(cr).build();
-			}
+			// check fields and create cluster
+			ch.checkCondition((body.getName() != null), "Name not specified")
+					.isFailed();
+			ch.checkCondition((body.getDatacenter() != null),
+					"Datacenter not specified");
+			if (!ch.getEntity(!ch.isFailed(), "Datacenter",
+					body.getDatacenter(), v).isFailed()) {
 
-			// create the object
-			else {
-
-				// look for the datacenter
-				ManagedEntity m = new ViConnection().getEntity("Datacenter",
-						body.getDatacenter(), headers, sessionKey, viServer);
-
-				// if the datacenter was found
-				if (m != null) {
-
-					// create an empty spec if one doesnt exist
-					if (body.getSpec() == null) {
-						body.setSpec(new ClusterConfigSpec());
-					}
-
-					Datacenter dc = (Datacenter) m;
-					ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-
-					ClusterComputeResource mo = dc.getHostFolder()
-							.createCluster(body.getName(),
-									(ClusterConfigSpec) body.getSpec());
-
-					return Response
-							.created(new URI(moUri.getUri(mo, thisUri)))
-							.entity(new RESTClusterComputeResource(mo, thisUri,
-									fields)).build();
+				// create an empty spec if one doesnt exist
+				if (body.getSpec() == null) {
+					body.setSpec(new ClusterConfigSpec());
 				}
+
+				// create request
+				Datacenter dc = (Datacenter) ch.getObj();
+				mo = dc.getHostFolder().createCluster(body.getName(),
+						(ClusterConfigSpec) body.getSpec());
+				ch.checkCondition((mo != null),
+						"Failed to create ClusterComputeResource");
 			}
+
 		} catch (InvalidName e) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("Invalid name");
-			
-			return Response
-					.status(400)
-					.entity(cr).build();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Invalid name");
 		} catch (DuplicateName e) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("Duplicate name");
-			
-			return Response
-					.status(400)
-					.entity(cr).build();
-		} catch (RuntimeFault e) {
-			return Response.status(400).build();
-		} catch (RemoteException e) {
-			return Response.status(400).build();
-		} catch (URISyntaxException e) {
-			return Response.status(400).build();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Duplicate name");
 		} catch (Exception e) {
-			return Response.status(400).build();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown Error");
 		}
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response
+						.created(new URI(moUri.getUri(mo, thisUri)))
+						.entity(new RESTClusterComputeResource(mo, thisUri,
+								fields)).build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
+		}
+
 		return null;
 	}
 

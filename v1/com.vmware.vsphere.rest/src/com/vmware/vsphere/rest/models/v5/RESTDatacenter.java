@@ -1,3 +1,32 @@
+/*================================================================================
+Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, 
+this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation 
+and/or other materials provided with the distribution.
+
+* Neither the name of VMware, Inc. nor the names of its contributors may be used
+to endorse or promote products derived from this software without specific prior 
+written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL VMWARE, INC. OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+================================================================================*/
+
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
@@ -23,14 +52,20 @@ import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Network;
-import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import com.vmware.vim25.mo.VmwareDistributedVirtualSwitch;
+
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ViConnection;
+
+/**
+* @author Branden Horiuchi (bhoriuchi@gmail.com)
+* @version 5
+*/
 
 public class RESTDatacenter extends RESTManagedEntity {
 
@@ -99,8 +134,6 @@ public class RESTDatacenter extends RESTManagedEntity {
 		}
 	}
 
-
-
 	/*
 	 * create a new object of this type
 	 */
@@ -108,66 +141,60 @@ public class RESTDatacenter extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-		
-		if (body == null) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
-			return Response.status(400).entity(cr).build();
-		}
-		
-		ViConnection vi = new ViConnection(headers, sessionKey, viServer);
-		ServiceInstance si = vi.getServiceInstance();
-		Folder rootFolder = si.getRootFolder();
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ViConnection v = new ViConnection(headers, sessionKey, viServer);
+		Datacenter dc = null;
+		Folder rootFolder = v.getSi().getRootFolder();
 
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		}
+
+		// attempt to create
 		try {
 
-			if (body.getName() != null) {
-				Datacenter dc = rootFolder.createDatacenter(body.getName());
-				
+			// check fields and create datacenter
+			ch.checkCondition((body.getName() != null), "Name not specified")
+					.isFailed();
+
+			if (!ch.isFailed()) {
+				dc = rootFolder.createDatacenter(body.getName());
+			}
+
+		} catch (InvalidName e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Invalid name");
+		} catch (DuplicateName e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Duplicate name");
+		} catch (Exception e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown Error");
+		}
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
 				return Response.created(new URI(moUri.getUri(dc, thisUri)))
 						.entity(new RESTDatacenter(dc, thisUri, fields))
 						.build();
-			} else {
-				
-				cr.setResponseStatus("failed");
-				cr.getResponseMessage().add("Name not specified");
-				
-				return Response
-						.status(400)
-						.entity(cr).build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
 			}
-		} catch (InvalidName e) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("Invalid name");
-			
-			return Response
-					.status(400)
-					.entity(cr).build();
-		} catch (DuplicateName e) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("Duplicate name");
-			
-			return Response
-					.status(400)
-					.entity(cr).build();
-		} catch (RuntimeFault e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
+
 		return null;
 	}
 
@@ -181,15 +208,16 @@ public class RESTDatacenter extends RESTManagedEntity {
 		// initialize a custom response
 		RESTCustomResponse cr = new RESTCustomResponse("",
 				new ArrayList<String>());
-		
+
 		if (body == null) {
-			
+
 			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
+			cr.getResponseMessage().add(
+					"No message body was specified in the request");
+
 			return Response.status(400).entity(cr).build();
 		}
-		
+
 		try {
 
 			// Get the entity that matches the id
@@ -208,13 +236,11 @@ public class RESTDatacenter extends RESTManagedEntity {
 					return Response.created(new URI(moUri.getUri(t, thisUri)))
 							.entity(new RESTTask(t, thisUri, fields)).build();
 				} else {
-					
+
 					cr.setResponseStatus("failed");
 					cr.getResponseMessage().add("Missing name value");
-					
-					return Response
-							.status(400)
-							.entity(cr).build();
+
+					return Response.status(400).entity(cr).build();
 				}
 			} else {
 				return Response.status(404).build();
@@ -326,8 +352,6 @@ public class RESTDatacenter extends RESTManagedEntity {
 
 	}
 
-
-	
 	/**
 	 * @return the configuration
 	 */

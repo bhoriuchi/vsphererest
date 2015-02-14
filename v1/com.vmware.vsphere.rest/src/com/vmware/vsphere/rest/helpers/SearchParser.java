@@ -1,10 +1,45 @@
+/*================================================================================
+Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, 
+this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation 
+and/or other materials provided with the distribution.
+
+* Neither the name of VMware, Inc. nor the names of its contributors may be used
+to endorse or promote products derived from this software without specific prior 
+written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL VMWARE, INC. OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+================================================================================*/
+
 package com.vmware.vsphere.rest.helpers;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+/**
+* @author Branden Horiuchi (bhoriuchi@gmail.com)
+* @version 5
+*/
 
 public class SearchParser {
 
@@ -25,27 +60,27 @@ public class SearchParser {
 	public void ParseSearch() {
 
 		try {
-			
+
 			String search = URLDecoder.decode(this.search, "UTF-8");
 
 			/*
 			 * The search string is passed in from the querystring search
-			 * searches take the form <path.to.field>-<search type>(<search value>)
-			 * for example search=guest.net.network-matches(10.1.1)
+			 * searches take the form <path.to.field>-<search type>(<search
+			 * value>) for example search=guest.net.network-matches(10.1.1)
 			 * valid operators are equals, notequals, matches, notmatches
 			 */
-			
+
 			if (search.indexOf("-") != -1 && search.indexOf("(") != -1
 					&& search.indexOf(")") != -1) {
-				this.field = search.substring(0, search.indexOf("-"));
-				this.operator = search.substring(search.indexOf("-") + 1,
-						search.indexOf("("));
-				this.value = search.substring(search.indexOf("(") + 1,
-						search.indexOf(")"));
+				this.setField(search.substring(0, search.indexOf("-")));
+				this.setOperator(search.substring(search.indexOf("-") + 1,
+						search.indexOf("(")));
+				this.setValue(search.substring(search.indexOf("(") + 1,
+						search.indexOf(")")));
 			} else {
-				this.field = "";
-				this.operator = "";
-				this.value = "";
+				this.setField("");
+				this.setOperator("");
+				this.setValue("");
 			}
 
 		} catch (UnsupportedEncodingException e) {
@@ -65,34 +100,39 @@ public class SearchParser {
 		}
 	}
 
-	public Field getAnyField(Class<?> cl, String field)
-	{
+	// helper function to compile a list of all inherited fields
+	private static List<Field> getAllFields(List<Field> fields, Class<?> type) {
+		fields.addAll(Arrays.asList(type.getDeclaredFields()));
+
+		if (type.getSuperclass() != null) {
+			fields = getAllFields(fields, type.getSuperclass());
+		}
+
+		return fields;
+	}
+
+	// helper function to find a specific field
+	public static Field getAnyField(Class<?> cl, String field) {
 		try {
-			Field f = cl.getDeclaredField(field);
-			return f;
-			
+
+			for (Field f : getAllFields(new LinkedList<Field>(), cl)) {
+				if (f.getName().toLowerCase().equals(field.toLowerCase())) {
+					return f;
+				}
+			}
+
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
-			// TODO Auto-generated catch block
-			if (cl.getSuperclass() != null) {
-				return getAnyField(cl.getSuperclass(), field);
-			}
-			else {
-				e.printStackTrace();
-			}
-			
 		}
 		return null;
 	}
-	
+
 	// helper function to drill down into an object
 	public Object getObject(Object object, String field) {
-		
+
 		try {
 
-			//Field f = object.getClass().getDeclaredField(field);
 			Field f = getAnyField(object.getClass(), field);
 			f.setAccessible(true);
 
@@ -101,23 +141,11 @@ public class SearchParser {
 				return f.get(object);
 			}
 
-			// if the field is not accessible, loop through its methods and try
-			// to find a public method that returns
-			// the same type as the variable and then call it
-			else {
-
-				for (Method m : object.getClass().getMethods()) {
-					if (m.getReturnType() == f.getType()) {
-						return m.invoke(object);
-					}
-				}
-			}
-
-		} catch (NullPointerException
-				| SecurityException | IllegalArgumentException
-				| IllegalAccessException | InvocationTargetException e) {
+		} catch (NullPointerException | SecurityException
+				| IllegalArgumentException | IllegalAccessException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// e.printStackTrace();
+			System.out.println("Couldnt get field " + field);
 		}
 
 		return null;
@@ -128,90 +156,127 @@ public class SearchParser {
 		return Match(object, this.field);
 	}
 
-	// match function that matches a partial object path
-	public Boolean Match(Object object, String fields) {
+	// main match function that can drill down into subclasses
+	public Boolean Match(Object o, String fieldStr) {
 
-		if (this.isValid()) {
-			try {
-
-				String valueof = "";
-				String[] fieldPath = fields.split("\\.");
-				int currentPathLength = 0;
-
-				// loop through remaining fields
-				for (int i = 0; i < fieldPath.length; i++) {
-
-					// calculate the current position in the path string
-					currentPathLength += fieldPath[i].length() + 1;
-					object = getObject(object, fieldPath[i]);
-
-					// if the object returned is an array, recursively search it
-					if (object instanceof Object[]) {
-						for (Object o : (Object[]) object) {
-							if (this.Match(
-									o,
-									fields.substring(currentPathLength,
-											fields.length()))) {
-								return true;
-							}
-						}
-
-						// if the recursive search never returned true, return
-						// false
-						return false;
-					}
-
-					if (object == null) {
-						return false;
-					}
-				}
-
-				if (object instanceof String) {
-					valueof = (String) object;
-				} else {
-					return false;
-				}
-
-				// start matching
-				if (this.operator.toLowerCase().equals("equals")
-						&& valueof.equals(this.value)) {
-					return true;
-				} else if (this.operator.equals("notequals")
-						&& !valueof.equals(this.value)) {
-					return true;
-				} else if (this.operator.toLowerCase().equals("matches")
-						&& valueof.toLowerCase().contains(
-								this.value.toLowerCase())) {
-					return true;
-				} else if (this.operator.toLowerCase().equals("notmatches")
-						&& !valueof.toLowerCase().contains(
-								this.value.toLowerCase())) {
-					return true;
-				}
-
-			} catch (SecurityException | IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
+		if (fieldStr == null || fieldStr.equals("")) {
 			return true;
 		}
+
+		String[] fields = fieldStr.split("\\.");
+		String bc = "";
+
+		// loop through the fields
+		for (String field : fields) {
+
+			// update the breadcrumb to the remaining fields
+			if (fields.length > 1) {
+				bc = fieldStr.substring(bc.length() + field.length() + 1,
+						fieldStr.length());
+			}
+
+			o = this.getObject(o, field);
+
+			if (o.getClass().isArray()) {
+				for (Object obj : (Object[]) o) {
+					if (this.Match(obj, bc)) {
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		// if the final instance is a string then we can evaluate it
+		if (o instanceof String) {
+			String value = (String) o;
+			return this.evaluate(value);
+		}
+
 		return false;
+
 	}
 
+	// evaluate the value and compare value based on the operator
+	private boolean evaluate(String value) {
+
+		// start matching
+		if (this.operator.toLowerCase().equals("equals")
+				&& value.equals(this.value)) {
+			return true;
+		} else if (this.operator.equals("notequals")
+				&& !value.equals(this.value)) {
+			return true;
+		} else if (this.operator.toLowerCase().equals("matches")
+				&& value.toLowerCase().contains(this.value.toLowerCase())) {
+			return true;
+		} else if (this.operator.toLowerCase().equals("notmatches")
+				&& !value.toLowerCase().contains(this.value.toLowerCase())) {
+			return true;
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * @return the field
+	 */
 	public String getField() {
-		return this.field;
+		return field;
 	}
 
+	/**
+	 * @param field
+	 *            the field to set
+	 */
+	public void setField(String field) {
+		this.field = field;
+	}
+
+	/**
+	 * @return the operator
+	 */
 	public String getOperator() {
-		return this.operator;
+		return operator;
 	}
 
+	/**
+	 * @param operator
+	 *            the operator to set
+	 */
+	public void setOperator(String operator) {
+		this.operator = operator;
+	}
+
+	/**
+	 * @return the value
+	 */
 	public String getValue() {
-		return this.value;
+		return value;
 	}
 
-	public String getSearch() {
-		return this.search;
+	/**
+	 * @param value
+	 *            the value to set
+	 */
+	public void setValue(String value) {
+		this.value = value;
 	}
+
+	/**
+	 * @return the search
+	 */
+	public String getSearch() {
+		return search;
+	}
+
+	/**
+	 * @param search
+	 *            the search to set
+	 */
+	public void setSearch(String search) {
+		this.search = search;
+	}
+
 }
