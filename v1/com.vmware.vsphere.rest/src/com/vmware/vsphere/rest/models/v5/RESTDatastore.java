@@ -4,14 +4,14 @@ Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
 Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
+ * Redistributions of source code must retain the above copyright notice, 
 this list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice, 
+ * Redistributions in binary form must reproduce the above copyright notice, 
 this list of conditions and the following disclaimer in the documentation 
 and/or other materials provided with the distribution.
 
-* Neither the name of VMware, Inc. nor the names of its contributors may be used
+ * Neither the name of VMware, Inc. nor the names of its contributors may be used
 to endorse or promote products derived from this software without specific prior 
 written permission.
 
@@ -32,8 +32,6 @@ package com.vmware.vsphere.rest.models.v5;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -49,15 +47,16 @@ import com.vmware.vim25.VmfsDatastoreCreateSpec;
 import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.HostDatastoreSystem;
 import com.vmware.vim25.mo.HostSystem;
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 
 /**
-* @author Branden Horiuchi (bhoriuchi@gmail.com)
-* @version 5
-*/
+ * @author Branden Horiuchi (bhoriuchi@gmail.com)
+ * @version 5
+ */
 
 public class RESTDatastore extends RESTManagedEntity {
 
@@ -84,7 +83,7 @@ public class RESTDatastore extends RESTManagedEntity {
 
 		try {
 
-			// datastore specific fields
+			// specific fields
 			if (fg.get("browser", fields)) {
 				this.setBrowser(new ManagedObjectReferenceUri().getUri(
 						mo.getBrowser(), uri));
@@ -125,64 +124,82 @@ public class RESTDatastore extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-		
-		if (body == null) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
-			return Response.status(400).entity(cr).build();
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ViConnection v = new ViConnection(headers, sessionKey, viServer);
+		Datastore d = null;
+
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
 		}
-		
+
+		// attempt to create
 		try {
 
-			// get a connection
-			ViConnection vi = new ViConnection(headers, sessionKey, viServer);
-			ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+			// check for mandatory fields
+			ch.checkCondition((body.getHostSystem() != null),
+					"hostSystem not specified");
+			ch.checkCondition((body.getType() != null), "Type not specified");
 
-			if (body.getHostSystem() != null && body.getHostSystem() != "") {
-				HostSystem h = (HostSystem) vi.getEntity("HostSystem",
-						moUri.getId(body.getHostSystem()));
-				Datastore d = null;
+			// get the host system
+			if (body.getHostSystem() != null
+					&& !ch.getEntity(!ch.isFailed(), "HostSystem",
+							body.getHostSystem(), v).isFailed()) {
 
+				// get the HostDatastoreSystem
+				HostSystem h = (HostSystem) ch.getObj();
 				HostDatastoreSystem ds = h.getHostDatastoreSystem();
 
-				// determine the type of datastore to add
-				if (body.getType() == "local" && body.getName() != null
-						&& body.getPath() != null) {
+				// determine the type of Datastore to add
+				if (body.getType() == "local"
+						&& !ch.checkCondition((body.getPath() != null),
+								"path not specified").isFailed()) {
 
 					d = ds.createLocalDatastore(body.getName(), body.getPath());
 
-				} else if (body.getType() == "nas" && body.getSpec() != null) {
+				} else if (body.getType() == "nas"
+						&& !ch.checkCondition((body.getSpec() != null),
+								"spec not specified").isFailed()) {
 
 					d = ds.createNasDatastore((HostNasVolumeSpec) body
 							.getSpec());
 
-				} else if (body.getType() == "vmfs" && body.getSpec() != null) {
+				} else if (body.getType() == "vmfs"
+						&& !ch.checkCondition((body.getSpec() != null),
+								"spec not specified").isFailed()) {
+
 					d = ds.createVmfsDatastore((VmfsDatastoreCreateSpec) body
 							.getSpec());
 
-				} else {
-					return Response.status(400).build();
 				}
 
-				// if the datastore is not null then return it as created
-				if (d != null) {
-					return Response.created(new URI(moUri.getUri(d, thisUri)))
-							.entity(new RESTDatastore(d, thisUri, fields))
-							.build();
-				}
+				// check that the object was created
+				ch.checkCondition((d != null), "Failed to create Datstore");
 			}
 
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage()
+					.add("Failed to create the Datastore");
+		}
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response.created(new URI(moUri.getUri(d, thisUri)))
+						.entity(new RESTDatastore(d, thisUri, fields)).build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
 		}
 
 		return null;

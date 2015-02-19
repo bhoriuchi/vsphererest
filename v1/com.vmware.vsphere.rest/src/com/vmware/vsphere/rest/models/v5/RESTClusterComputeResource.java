@@ -30,29 +30,18 @@ POSSIBILITY OF SUCH DAMAGE.
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 
 import com.vmware.vim25.ClusterActionHistory;
 import com.vmware.vim25.ClusterConfigInfo;
-import com.vmware.vim25.ClusterConfigSpec;
 import com.vmware.vim25.ClusterDrsFaults;
 import com.vmware.vim25.ClusterDrsMigration;
 import com.vmware.vim25.ClusterDrsRecommendation;
 import com.vmware.vim25.ClusterRecommendation;
-import com.vmware.vim25.DuplicateName;
-import com.vmware.vim25.InvalidName;
 import com.vmware.vim25.mo.ClusterComputeResource;
-import com.vmware.vim25.mo.Datacenter;
 
-import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
-import com.vmware.vsphere.rest.helpers.ViConnection;
 
 /**
 * @author Branden Horiuchi (bhoriuchi@gmail.com)
@@ -143,82 +132,6 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 		}
 	}
 
-	/*
-	 * create a new object of this type
-	 */
-	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
-
-		// initialize classes
-		ConditionHelper ch = new ConditionHelper();
-		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
-		ClusterComputeResource mo = null;
-
-		// check the body
-		if (ch.checkCondition((body != null),
-				"No message body was specified in the request").isFailed()) {
-			return Response.status(400).entity(ch.getResponse()).build();
-		}
-
-		// attempt to create
-		try {
-
-			// check fields and create cluster
-			ch.checkCondition((body.getName() != null), "Name not specified")
-					.isFailed();
-			ch.checkCondition((body.getDatacenter() != null),
-					"Datacenter not specified");
-			if (!ch.getEntity(!ch.isFailed(), "Datacenter",
-					body.getDatacenter(), v).isFailed()) {
-
-				// create an empty spec if one doesnt exist
-				if (body.getSpec() == null) {
-					body.setSpec(new ClusterConfigSpec());
-				}
-
-				// create request
-				Datacenter dc = (Datacenter) ch.getObj();
-				mo = dc.getHostFolder().createCluster(body.getName(),
-						(ClusterConfigSpec) body.getSpec());
-				ch.checkCondition((mo != null),
-						"Failed to create ClusterComputeResource");
-			}
-
-		} catch (InvalidName e) {
-			ch.setFailed(true);
-			ch.getResponse().setResponseStatus("failed");
-			ch.getResponse().getResponseMessage().add("Invalid name");
-		} catch (DuplicateName e) {
-			ch.setFailed(true);
-			ch.getResponse().setResponseStatus("failed");
-			ch.getResponse().getResponseMessage().add("Duplicate name");
-		} catch (Exception e) {
-			ch.setFailed(true);
-			ch.getResponse().setResponseStatus("failed");
-			ch.getResponse().getResponseMessage().add("Unknown Error");
-		}
-
-		// check if the request failed
-		if (ch.isFailed()) {
-			return Response.status(400).entity(ch.getResponse()).build();
-		} else {
-			try {
-				return Response
-						.created(new URI(moUri.getUri(mo, thisUri)))
-						.entity(new RESTClusterComputeResource(mo, thisUri,
-								fields)).build();
-			} catch (URISyntaxException e) {
-				ch.setFailed(true);
-				ch.getResponse().setResponseStatus("failed");
-				ch.getResponse().getResponseMessage()
-						.add("Invalid URI created");
-			}
-		}
-
-		return null;
-	}
 
 	/*
 	 * update this object

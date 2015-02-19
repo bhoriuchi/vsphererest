@@ -158,12 +158,12 @@ public class RESTDatacenter extends RESTManagedEntity {
 		try {
 
 			// check fields and create datacenter
-			ch.checkCondition((body.getName() != null), "Name not specified")
-					.isFailed();
-
-			if (!ch.isFailed()) {
+			if (!ch.checkCondition((body.getName() != null), "Name not specified").isFailed()) {
 				dc = rootFolder.createDatacenter(body.getName());
 			}
+			
+			// check that the datacenter was created
+			ch.checkCondition((dc != null), "Failed to create Datacenter");
 
 		} catch (InvalidName e) {
 			ch.setFailed(true);

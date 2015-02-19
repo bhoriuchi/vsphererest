@@ -32,8 +32,6 @@ package com.vmware.vsphere.rest.models.v5;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
@@ -43,7 +41,6 @@ import com.vmware.vim25.DVPortgroupConfigSpec;
 import com.vmware.vim25.DuplicateName;
 import com.vmware.vim25.DvsFault;
 import com.vmware.vim25.InvalidName;
-import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.VMwareDVSPortSetting;
 import com.vmware.vim25.VmwareDistributedVirtualSwitchPvlanSpec;
 import com.vmware.vim25.VmwareDistributedVirtualSwitchTrunkVlanSpec;
@@ -52,6 +49,7 @@ import com.vmware.vim25.mo.DistributedVirtualPortgroup;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VmwareDistributedVirtualSwitch;
 import com.vmware.vsphere.rest.helpers.ArrayHelper;
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.DefaultValuesHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.FieldGet;
@@ -124,39 +122,38 @@ public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 	public Response create(String vimType, String vimClass, String restClass,
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
-		
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-		
-		
-		if (body == null) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
-			return Response.status(400).entity(cr).build();
-		}
-		
-		// helps with getting default values if no value is given
-		DefaultValuesHelper h = new DefaultValuesHelper().init();
 
+		
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
+		DefaultValuesHelper dh = new DefaultValuesHelper().init();
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ViConnection v = new ViConnection(headers, sessionKey, viServer);
+		VmwareDistributedVirtualSwitch s = null;
+		Task t = null;
+		
+
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		}
+
+		// attempt to create
 		try {
 
-			// get a connection
-			ViConnection vi = new ViConnection(headers, sessionKey, viServer);
-			ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-			Task t = null;
-
-			// the distributed virtual switch must be specified
-			if (body.getDistributedVirtualSwitch() != null
-					&& body.getDistributedVirtualSwitch() != "") {
+			// check required values
+			ch.checkCondition((body.getDistributedVirtualSwitch() != null), "distributedVirtualSwitch not specified");
+			
+			// get dvSwitch
+			if (body.getDistributedVirtualSwitch() != null && !ch.getEntity(!ch.isFailed(), "VmwareDistributedVirtualSwitch",
+							body.getDistributedVirtualSwitch(), v).isFailed()) {
 				
-				/*
-				 *  create a defualt spec if a name was provided. this is a less complicated method for creating a configuration
-				 *  with mostly default values.
-				 */
-				if (body.getName() != null && body.getName() != "") {
+				// get the switch as a variable
+				s = (VmwareDistributedVirtualSwitch) ch.getObj();
+			
+				// check if a quick config was used
+				if (body.getName() != null) {
 					
 					// create a config spec with minimal options
 					DVPortgroupConfigSpec spec = new DVPortgroupConfigSpec();
@@ -167,7 +164,7 @@ public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 
 						VmwareDistributedVirtualSwitchVlanIdSpec vs = new VmwareDistributedVirtualSwitchVlanIdSpec();
 						vs.setVlanId(body.getVlanId());
-						vs.setInherited( (Boolean) h.set("VmwareDistributedVirtualSwitchVlanIdSpec", "inherited", body.getInherited()) );
+						vs.setInherited( (Boolean) dh.set("VmwareDistributedVirtualSwitchVlanIdSpec", "inherited", body.getInherited()) );
 						dvps.setVlan(vs);
 						spec.setDefaultPortConfig(dvps);
 
@@ -179,7 +176,7 @@ public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 						VmwareDistributedVirtualSwitchTrunkVlanSpec vs = new VmwareDistributedVirtualSwitchTrunkVlanSpec();
 						ArrayHelper ah = new ArrayHelper();
 						vs.setVlanId(ah.getNumericRange(body.getVlanTrunk()));
-						vs.setInherited( (Boolean) h.set("VmwareDistributedVirtualSwitchTrunkVlanSpec", "inherited", body.getInherited()) );
+						vs.setInherited( (Boolean) dh.set("VmwareDistributedVirtualSwitchTrunkVlanSpec", "inherited", body.getInherited()) );
 						dvps.setVlan(vs);
 						spec.setDefaultPortConfig(dvps);
 					}
@@ -189,83 +186,69 @@ public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 						
 						VmwareDistributedVirtualSwitchPvlanSpec vs = new VmwareDistributedVirtualSwitchPvlanSpec();
 						vs.setPvlanId(body.getpVlanId());
-						vs.setInherited( (Boolean) h.set("VmwareDistributedVirtualSwitchPvlanSpec", "inherited", body.getInherited()) );
+						vs.setInherited( (Boolean) dh.set("VmwareDistributedVirtualSwitchPvlanSpec", "inherited", body.getInherited()) );
 						dvps.setVlan(vs);
 						spec.setDefaultPortConfig(dvps);
 					}
 
 					// update default spec
 					spec.setName(body.getName());
-					spec.setType( (String)h.set("DVPortgroupConfigSpec", "type", body.getType()) );
-					spec.setNumPorts( (Integer) h.set("DVPortgroupConfigSpec", "numPorts", body.getNumPorts()) );
+					spec.setType( (String) dh.set("DVPortgroupConfigSpec", "type", body.getType()) );
+					spec.setNumPorts( (Integer) dh.set("DVPortgroupConfigSpec", "numPorts", body.getNumPorts()) );
 					spec.setDefaultPortConfig(dvps);
 					
 					// set the body spec to the newly created spec
 					body.setSpec(spec);
+					
 				}
 
-				// get the dvSwitch
-				VmwareDistributedVirtualSwitch s = (VmwareDistributedVirtualSwitch) vi
-						.getEntity("VmwareDistributedVirtualSwitch", body.getDistributedVirtualSwitch());
 				
-				
-				if (s != null) {
+				// attempt to create the dvpg
+				if (!ch.checkCondition((body.getSpec() != null), "spec not specified").isFailed()) {
 
-					if (body.getSpecs() != null) {
-
-						t = s.addDVPortgroup_Task((DVPortgroupConfigSpec[]) body
-								.getSpecs());
-
-					} else if (body.getSpec() != null) {
-
-						t = s.createDVPortgroup_Task((DVPortgroupConfigSpec) body
-								.getSpec());
-					}
-
-					else {
-						cr.setResponseStatus("failed");
-						cr.getResponseMessage().add("No config spec provided");
-						
-						return Response
-								.status(400)
-								.entity(cr).build();						
-					}
-				} else {
+					t = s.createDVPortgroup_Task((DVPortgroupConfigSpec) body
+							.getSpec());
 					
-					cr.setResponseStatus("failed");
-					cr.getResponseMessage().add("DistributedVirtualSwitch not found");
-					
-					return Response
-							.status(400)
-							.entity(cr).build();
 				}
-			}
-
-			// check if the task was created
-			if (t != null) {
-				return Response.created(new URI(moUri.getUri(t, thisUri)))
-						.entity(new RESTTask(t, thisUri, fields)).build();
+				
+				// check that a task was created
+				ch.checkCondition((t != null), "Failed to create DistributedVirtualPortGroup");
 			}
 
 		} catch (DvsFault e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("DvsFault");
 		} catch (DuplicateName e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Duplicate Name");
 		} catch (InvalidName e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RuntimeFault e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Invalid Name");
+		} catch (Exception e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown Exception");
 		}
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response.created(new URI(moUri.getUri(t, thisUri)))
+						.entity(new RESTTask(t, thisUri, fields))
+						.build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
+		}
+
 		return null;
 	}
 

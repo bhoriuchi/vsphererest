@@ -29,6 +29,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package com.vmware.vsphere.rest.helpers;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import com.vmware.vsphere.rest.models.v5.RESTCustomResponse;
@@ -67,11 +69,16 @@ public class ConditionHelper {
 		return this;
 	}
 	
-	// attempts to get an object
 	public ConditionHelper getEntity(boolean condition, String type, String id, ViConnection v) {
+		return this.getEntity(condition, type, id, v, true);
+	}
+	
+	
+	// attempts to get an object
+	public ConditionHelper getEntity(boolean condition, String type, String id, ViConnection v, boolean setFailed) {
 		
-		if (condition) {
-			
+		if (condition && id != null && type != null) {
+
 			// search for the entity
 			Object o = v.getEntity(type, id);
 
@@ -80,9 +87,11 @@ public class ConditionHelper {
 				this.setObj(o);
 			}
 			else {
-				this.setFailed(true);
-				this.getResponse().setResponseStatus("failed");
-				this.getResponse().getResponseMessage().add("Failed to find " + type);
+				if (setFailed) {
+					this.setFailed(true);
+					this.getResponse().setResponseStatus("failed");
+					this.getResponse().getResponseMessage().add("Failed to find " + type);
+				}
 			}
 		}
 		
@@ -90,6 +99,40 @@ public class ConditionHelper {
 	}
 	
 	
+	// invoke a command
+	public ConditionHelper invokeSet(Object o, String method, Object value, Class<?> param) {
+		
+		try {
+			
+			if ( (param == String.class && value != null) || (param == int.class && (int) value > 0) ) {
+			
+				Method m = o.getClass().getMethod(method, new Class<?>[] {param});
+				m.invoke(o, new Object[] {value});
+				this.setObj(o);
+			}
+			
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return this;
+		
+	}
+	
+
 	/**
 	 * @return the obj
 	 */

@@ -32,8 +32,6 @@ package com.vmware.vsphere.rest.models.v5;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -50,15 +48,14 @@ import com.vmware.vim25.DuplicateName;
 import com.vmware.vim25.DvsFault;
 import com.vmware.vim25.DvsNotAuthorized;
 import com.vmware.vim25.InvalidName;
-import com.vmware.vim25.NotFound;
-import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.VMwareDVSConfigSpec;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.DistributedVirtualSwitch;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.Task;
+
 import com.vmware.vsphere.rest.helpers.ArrayHelper;
-//import com.vmware.vsphere.rest.helpers.DefaultValuesHelper;
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
@@ -132,58 +129,41 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-		
-		if (body == null) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
-			return Response.status(400).entity(cr).build();
-		}
-		
-		// instantiate helpers
-		// DefaultValuesHelper dh = new DefaultValuesHelper().init();
+
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
 		ArrayHelper ah = new ArrayHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-
-		// create a new service instance
 		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Folder f = null;
+		Task t = null;
 
-		
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		}
+
+		// attempt to create
 		try {
-
-			// get the parent folder
+			
+			// get the parent folder. it can either be specified by the user or be placed in the root network folder on the datacenter
 			if (body.getDatacenter() != null) {
-
+				
 				Datacenter dc = (Datacenter) v.getEntity("Datacenter",
 						body.getDatacenter());
 				f = dc.getNetworkFolder();
+				
 			} else if (body.getParentFolder() != null) {
 
 				f = (Folder) v.getEntity("Folder", body.getParentFolder());
 			}
-
-			// check if the folders child types for DistributedVirtualSwitch or
-			// if the folder is null
-			if (f == null) {
+			
+			// verify folder
+			if (!ch.checkCondition((f != null && ah.containsCaseInsensitive("DistributedVirtualSwitch",
+					f.getChildType())), "Invalid folder").isFailed()) {
 				
-				cr.setResponseStatus("failed");
-				cr.getResponseMessage().add("The Network Folder was not found. A Network Folder or Datacenter must be specified");
-				
-				return Response
-						.status(400)
-						.entity(cr)
-						.build();
-			} else if (ah.containsCaseInsensitive("DistributedVirtualSwitch",
-					f.getChildType())) {
-
-				Task t = null;
-
-				// try to create the dvswitch
+				// check if quickconfig
 				if (body.getName() != null) {
 
 					// create a default config spec
@@ -191,70 +171,69 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 					VMwareDVSConfigSpec dvSpec = new VMwareDVSConfigSpec();
 					dvSpec.setName(body.getName());
 					spec.setConfigSpec(dvSpec);
-
+					
 					// check if a specific dvSwitch version was requested
 					if (body.getVersion() != null) {
 						DistributedVirtualSwitchProductSpec pSpec = new DistributedVirtualSwitchProductSpec();
 						pSpec.setVersion(body.getVersion());
 						spec.setProductInfo(pSpec);
 					}
-
-					// create the dvswitch
-					t = f.createDVS_Task(spec);
-
-				} else if (body.getSpec() != null) {
-
-					t = f.createDVS_Task((DVSCreateSpec) body.getSpec());
-
-				} else {
-					cr.setResponseStatus("failed");
-					cr.getResponseMessage().add("Missing DVSCreateSpec or mandatory parameters");
 					
-					return Response
-							.status(400)
-							.entity(cr)
-							.build();
+					// set the spec
+					body.setSpec(spec);
 				}
-
-				// check if the task was created
-				if (t != null) {
-					return Response.created(new URI(moUri.getUri(t, thisUri)))
-							.entity(new RESTTask(t, thisUri, fields)).build();
+				
+				// check spec
+				if (!ch.checkCondition((body.getSpec() != null), "spec not specified").isFailed()) {
+					t = f.createDVS_Task((DVSCreateSpec) body.getSpec());
 				}
-
 			}
+			
+			
+			// check if cluster was created
+			ch.checkCondition((t != null),
+					"Failed to create DistributedVirtualSwitch");
+
 		} catch (DvsNotAuthorized e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Not authorized");
 		} catch (DvsFault e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("DvsFault");
 		} catch (DuplicateName e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Duplicate Name");
 		} catch (InvalidName e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotFound e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RuntimeFault e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Invalid Name");
+		} catch (Exception e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown Error");
 		}
-		// if this was reached the switch creation failed
-		cr.setResponseStatus("failed");
-		cr.getResponseMessage().add("Failed to create the DistributedVirtualSwitch");
-		return Response
-				.status(400)
-				.entity(cr)
-				.build();
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response
+						.created(new URI(moUri.getUri(t, thisUri)))
+						.entity(new RESTTask(t, thisUri,
+								fields)).build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
+		}
+
+		return null;
 	}
 
 	/**

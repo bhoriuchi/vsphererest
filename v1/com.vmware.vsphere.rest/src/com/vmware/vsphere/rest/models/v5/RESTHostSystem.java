@@ -4,14 +4,14 @@ Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
 Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
+ * Redistributions of source code must retain the above copyright notice, 
 this list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice, 
+ * Redistributions in binary form must reproduce the above copyright notice, 
 this list of conditions and the following disclaimer in the documentation 
 and/or other materials provided with the distribution.
 
-* Neither the name of VMware, Inc. nor the names of its contributors may be used
+ * Neither the name of VMware, Inc. nor the names of its contributors may be used
 to endorse or promote products derived from this software without specific prior 
 written permission.
 
@@ -30,25 +30,34 @@ POSSIBILITY OF SUCH DAMAGE.
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
+import com.vmware.vim25.ComputeResourceConfigSpec;
 import com.vmware.vim25.HostCapability;
 import com.vmware.vim25.HostConfigInfo;
+import com.vmware.vim25.HostConnectFault;
 import com.vmware.vim25.HostConnectSpec;
 import com.vmware.vim25.HostHardwareInfo;
 import com.vmware.vim25.HostLicensableResourceInfo;
 import com.vmware.vim25.HostListSummary;
 import com.vmware.vim25.HostRuntimeInfo;
 import com.vmware.vim25.HostSystemResourceInfo;
+import com.vmware.vim25.InvalidLogin;
+import com.vmware.vim25.InvalidName;
+import com.vmware.vim25.mo.ClusterComputeResource;
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.Task;
-
+import com.vmware.vsphere.rest.helpers.ArrayHelper;
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.DefaultValuesHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
@@ -56,9 +65,9 @@ import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ViConnection;
 
 /**
-* @author Branden Horiuchi (bhoriuchi@gmail.com)
-* @version 5
-*/
+ * @author Branden Horiuchi (bhoriuchi@gmail.com)
+ * @version 5
+ */
 
 public class RESTHostSystem extends RESTManagedEntity {
 
@@ -149,62 +158,186 @@ public class RESTHostSystem extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-
-		if (body == null) {
-
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add(
-					"No message body was specified in the request");
-
-			return Response.status(400).entity(cr).build();
-		}
-
-		// instantiate helpers
-		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
+		ArrayHelper ah = new ArrayHelper();
 		DefaultValuesHelper h = new DefaultValuesHelper().init();
-		HostConnectSpec spec = new HostConnectSpec();
-
-		// create a new service instance
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
 		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Task t = null;
+		Folder f = null;
+		ClusterComputeResource cl = null;
+		ResourcePool rp = null;
+		ComputeResourceConfigSpec rs = new ComputeResourceConfigSpec();
 
-		if (body.getName() != null) {
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		}
 
-			// create a new spec
+		// attempt to create
+		try {
 
-			// set mandatory values
-			spec.setForce((boolean) h.set("HostConnectSpec", "force",
-					body.isForce()));
-			spec.setHostName(body.getName());
-			spec.setUserName((String) h.set("HostConnectSpec", "userName",
-					body.getUsername()));
+			// check if a quickspec
+			if (body.getName() != null) {
 
-			if (body.getPassword() != null) {
-				spec.setPassword(body.getPassword());
+				// create a new spec
+				HostConnectSpec hSpec = new HostConnectSpec();
+
+				// set mandatory values
+				hSpec.setForce((boolean) h.set("HostConnectSpec", "force",
+						body.isForce()));
+				hSpec.setHostName(body.getName());
+
+				// if a folder was specified add it
+				if (body.getVmFolder() != null
+						&& !ch.getEntity((!ch.isFailed()), "Folder",
+								body.getVmFolder(), v, false).isFailed()) {
+					f = (Folder) ch.getObj();
+					hSpec.setVmFolder(f.getMOR());
+				}
+
+				// set optional values
+				ch.setObj(hSpec);
+				ch.invokeSet(ch.getObj(), "setUserName", body.getUsername(),
+						String.class);
+				ch.invokeSet(ch.getObj(), "setPassword", body.getPassword(),
+						String.class);
+				ch.invokeSet(ch.getObj(), "setManagementIp",
+						body.getManagementIp(), String.class);
+				ch.invokeSet(ch.getObj(), "setPort", body.getPort(), int.class);
+				ch.invokeSet(ch.getObj(), "setSslThumbprint",
+						body.getSslThumbprint(), String.class);
+				ch.invokeSet(ch.getObj(), "setVimAccountName",
+						body.getVimAccountName(), String.class);
+				ch.invokeSet(ch.getObj(), "setVimAccountPassword",
+						body.getVimAccountPassword(), String.class);
+
+				// set the specification
+				body.setSpec(ch.getObj());
+
 			}
 
-			// optional values
-			if (body.getManagementIp() != null) {
-				spec.setManagementIp(body.getManagementIp());
-			}
-			if (body.getSslThumbprint() != null) {
-				spec.setSslThumbprint(body.getSslThumbprint());
-			}
-			if (body.getVmFolder() != null) {
-				Folder f = (Folder) v.getEntity("Folder", body.getVmFolder());
+			// check to make sure a spec was created
+			if (!ch.checkCondition((body.getSpec() != null),
+					"spec not specified").isFailed()) {
 
-				if (f != null) {
-					spec.setVmFolder(f.getMOR());
+				if (body.getClusterComputeResource() != null) {
+
+					if (!ch.getEntity(!ch.isFailed(), "ClusterComputeResource",
+							body.getClusterComputeResource(), v).isFailed()) {
+
+						// get parent object
+						cl = (ClusterComputeResource) ch.getObj();
+
+						// get the resource pool
+						if (body.getResourcePool() != null
+								&& !ch.getEntity(!ch.isFailed(),
+										"ResourcePool", body.getResourcePool(),
+										v, false).isFailed()) {
+							rp = (ResourcePool) ch.getObj();
+						}
+
+						// attempt to create
+						if (body.getLicense() != null) {
+
+							t = cl.addHost_Task(
+									(HostConnectSpec) body.getSpec(),
+									body.isConnected(), rp, body.getLicense());
+						} else {
+
+							t = cl.addHost_Task(
+									(HostConnectSpec) body.getSpec(),
+									body.isConnected(), rp);
+						}
+					}
+				}
+
+				else {
+
+					if (body.getParentFolder() != null
+							&& !ch.getEntity(!ch.isFailed(), "Folder",
+									body.getParentFolder(), v).isFailed()) {
+
+						// get parent object
+						f = (Folder) ch.getObj();
+					} else if (body.getDatacenter() != null
+							&& !ch.getEntity(!ch.isFailed(), "Datacenter",
+									body.getDatacenter(), v).isFailed()) {
+
+						// get datacenter host folder
+						Datacenter dc = (Datacenter) ch.getObj();
+						f = dc.getHostFolder();
+					}
+
+					// check that an appropriate folder was found and that it
+					// can hold hosts
+					if (!ch.checkCondition(
+							(f != null && ah.containsCaseInsensitive(
+									"HostSystem", f.getChildType())),
+							"invalid HostSystem folder, or no folder found")
+							.isFailed()) {
+						// get compute resource spec
+						if (body.getComputeResourceConfigSpec() != null) {
+							rs = (ComputeResourceConfigSpec) body
+									.getComputeResourceConfigSpec();
+						}
+
+						// attempt to create
+						if (body.getLicense() != null) {
+
+							t = f.addStandaloneHost_Task(
+									(HostConnectSpec) body.getSpec(), rs,
+									body.isConnected(), body.getLicense());
+						} else {
+
+							t = f.addStandaloneHost_Task(
+									(HostConnectSpec) body.getSpec(), rs,
+									body.isConnected());
+						}
+					}
 				}
 			}
 
+			// check if cluster was created
+			ch.checkCondition((t != null), "Failed to add HostSystem");
+
+		} catch (InvalidName e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Invalid name");
+		} catch (InvalidLogin e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Login failed");
+		} catch (HostConnectFault e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Host failed to connect");
+		} catch (Exception e) {
+			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown exception");
+		}
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response.created(new URI(moUri.getUri(t, thisUri)))
+						.entity(new RESTTask(t, thisUri, fields)).build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
 		}
 
 		return null;
-
 	}
 
 	/**

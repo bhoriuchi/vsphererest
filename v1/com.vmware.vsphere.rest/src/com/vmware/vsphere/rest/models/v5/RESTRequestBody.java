@@ -61,18 +61,22 @@ public class RESTRequestBody {
 	private String managementIp;
 	private String sslThumbprint;
 	private String license;
+	private String vimAccountName;
+	private String vimAccountPassword;
 	
 	
 	
 	private int numPorts = -1;
 	private int vlanId = -1;
 	private int pVlanId = -1;
+	private int port = -1;
 
 	private boolean force = false;
-	private boolean asConnected = true;
+	private boolean connected = true;
 	
 	private Object spec;
 	private Object[] specs;	
+	private Object computeResourceConfigSpec;
 	
 	/**
 	 * @return the name
@@ -398,18 +402,7 @@ public class RESTRequestBody {
 	public void setForce(boolean force) {
 		this.force = force;
 	}
-	/**
-	 * @return the asConnected
-	 */
-	public boolean isAsConnected() {
-		return asConnected;
-	}
-	/**
-	 * @param asConnected the asConnected to set
-	 */
-	public void setAsConnected(boolean asConnected) {
-		this.asConnected = asConnected;
-	}
+
 	/**
 	 * @return the vmFolder
 	 */
@@ -421,5 +414,65 @@ public class RESTRequestBody {
 	 */
 	public void setVmFolder(String vmFolder) {
 		this.vmFolder = vmFolder;
+	}
+	/**
+	 * @return the connected
+	 */
+	public boolean isConnected() {
+		return connected;
+	}
+	/**
+	 * @param connected the connected to set
+	 */
+	public void setConnected(boolean connected) {
+		this.connected = connected;
+	}
+	/**
+	 * @return the port
+	 */
+	public int getPort() {
+		return port;
+	}
+	/**
+	 * @param port the port to set
+	 */
+	public void setPort(int port) {
+		this.port = port;
+	}
+	/**
+	 * @return the vimAccountName
+	 */
+	public String getVimAccountName() {
+		return vimAccountName;
+	}
+	/**
+	 * @param vimAccountName the vimAccountName to set
+	 */
+	public void setVimAccountName(String vimAccountName) {
+		this.vimAccountName = vimAccountName;
+	}
+	/**
+	 * @return the vimAccountPassword
+	 */
+	public String getVimAccountPassword() {
+		return vimAccountPassword;
+	}
+	/**
+	 * @param vimAccountPassword the vimAccountPassword to set
+	 */
+	public void setVimAccountPassword(String vimAccountPassword) {
+		this.vimAccountPassword = vimAccountPassword;
+	}
+	/**
+	 * @return the computeResourceConfigSpec
+	 */
+	public Object getComputeResourceConfigSpec() {
+		return computeResourceConfigSpec;
+	}
+	/**
+	 * @param computeResourceConfigSpec the computeResourceConfigSpec to set
+	 */
+	public void setComputeResourceConfigSpec(Object computeResourceConfigSpec) {
+		this.computeResourceConfigSpec = computeResourceConfigSpec;
 	}
 }

@@ -33,7 +33,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -43,7 +42,8 @@ import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.ServiceInstance;
+
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
@@ -108,64 +108,34 @@ public class RESTFolder extends RESTManagedEntity {
 			String viServer, HttpHeaders headers, String sessionKey,
 			String fields, String thisUri, RESTRequestBody body) {
 
-		// initialize a custom response
-		RESTCustomResponse cr = new RESTCustomResponse("",
-				new ArrayList<String>());
-		
-		if (body == null) {
-			
-			cr.setResponseStatus("failed");
-			cr.getResponseMessage().add("No message body was specified in the request");
-			
-			return Response.status(400).entity(cr).build();
-		}
-		
-		// instantiate helpers
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-
-		// create a new service instance
 		ViConnection v = new ViConnection(headers, sessionKey, viServer);
-		ServiceInstance si = v.getServiceInstance();
 		Folder f = null;
+		Folder nf = null;
 
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		}
+
+		// attempt to create
 		try {
 
-			// check if a specific folder was specified
-			if (body.getName() == null) {
+			// check fields and create datacenter
+			if (!ch.checkCondition((body.getName() != null), "Name not specified").isFailed()) {
 				
-				cr.setResponseStatus("failed");
-				cr.getResponseMessage().add("Missing name parameter");
-				
-				return Response
-						.status(400)
-						.entity(cr).build();
-			} else if (body.getParentFolder() != null) {
-				f = (Folder) v.getEntity("Folder", body.getParentFolder());
-			}
-			// otherwise a folder type should be specified
-			else if (body.getType() != null) {
-
-				// a datacenter folder gets added at the root
-				if (body.getType().toLowerCase().equals("datacenter")) {
-					f = si.getRootFolder();
+				// get the parent folder
+				if (body.getParentFolder() != null && !ch.getEntity(!ch.isFailed(), "Folder", body.getParentFolder(), v).isFailed()) {
+					f = (Folder) ch.getObj();
 				}
-
-				// every other folder gets added
-				else if (body.getDatacenter() != null) {
-
-					Datacenter dc = (Datacenter) v.getEntity("Datacenter",
-							body.getDatacenter());
-
-					if (dc == null) {
-						cr.setResponseStatus("failed");
-						cr.getResponseMessage().add("Datacenter could not be found");
-						
-						return Response
-								.status(400)
-								.entity(cr)
-								.build();	
-					}
-					else if (body.getType().toLowerCase().equals("hostsystem")) {
+				else if (body.getDatacenter() != null && !ch.getEntity(!ch.isFailed(), "Datacenter", body.getDatacenter(), v).isFailed()) {
+					
+					Datacenter dc = (Datacenter) ch.getObj();
+					
+					if (body.getType().toLowerCase().equals("hostsystem")) {
 						f = dc.getHostFolder();
 					} else if (body.getType().toLowerCase().equals("datastore")) {
 						f = dc.getDatastoreFolder();
@@ -173,59 +143,45 @@ public class RESTFolder extends RESTManagedEntity {
 						f = dc.getNetworkFolder();
 					} else if (body.getType().toLowerCase().equals("virtualmachine")) {
 						f = dc.getVmFolder();
-					} else {
-						
-						cr.setResponseStatus("failed");
-						cr.getResponseMessage().add("Invalid folder type. Current types are Datacenter, HostSystem, Datastore, Network, and VirtualMachine");
-						
-						return Response
-								.status(400)
-								.entity(cr)
-								.build();
 					}
 				}
-			}
-
-			if (f == null) {
 				
-				cr.setResponseStatus("failed");
-				cr.getResponseMessage().add("A folder that matches the request could not be found");
-				
-				return Response
-						.status(400)
-						.entity(cr)
-						.build();
-			} else {
-
-				Folder newFolder = f.createFolder(body.getName());
-				
-				if (newFolder != null) {
-					return Response.created(new URI(moUri.getUri(newFolder, thisUri)))
-							.entity(new RESTFolder(newFolder, thisUri, fields)).build();
+				// if the parent folder exists then try to create the sub-folder
+				if (!ch.checkCondition((f != null), "parent folder not found").isFailed()) {
+					nf = f.createFolder(body.getName());
 				}
 			}
+			
+			// check that the datacenter was created
+			ch.checkCondition((nf != null), "Failed to create Folder");
 
 		} catch (InvalidProperty e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RuntimeFault e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Invalid property");
+		} catch (Exception e) {
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown Error");
 		}
 
-		cr.setResponseStatus("failed");
-		cr.getResponseMessage().add("Could not create folder");
-		
-		return Response
-				.status(400)
-				.entity(cr)
-				.build();
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response.created(new URI(moUri.getUri(nf, thisUri)))
+						.entity(new RESTFolder(nf, thisUri, fields))
+						.build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
+		}
+
+		return null;
 	}
 
 	/**
