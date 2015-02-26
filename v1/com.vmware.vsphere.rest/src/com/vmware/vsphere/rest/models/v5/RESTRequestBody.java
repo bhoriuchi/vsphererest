@@ -45,6 +45,7 @@ public class RESTRequestBody {
 	private String datacenter;
 	private String clusterComputeResource;
 	private String resourcePool;
+	private String parentResourcePool;
 	private String distributedVirtualSwitch;
 	private String hostSystem;
 	private String reference;
@@ -64,12 +65,18 @@ public class RESTRequestBody {
 	private String vimAccountName;
 	private String vimAccountPassword;
 	
-	
+	// vm config spec options
+	private String alternativeGuestName;
+	private String annotation;
+	private String guestId;
 	
 	private int numPorts = -1;
 	private int vlanId = -1;
 	private int pVlanId = -1;
 	private int port = -1;
+	private int memoryMB = 1024;
+	private int numCoresPerSocket = 1;
+	private int numCPUs = 1;
 
 	private boolean force = false;
 	private boolean connected = true;
@@ -474,5 +481,89 @@ public class RESTRequestBody {
 	 */
 	public void setComputeResourceConfigSpec(Object computeResourceConfigSpec) {
 		this.computeResourceConfigSpec = computeResourceConfigSpec;
+	}
+	/**
+	 * @return the parentResourcePool
+	 */
+	public String getParentResourcePool() {
+		return parentResourcePool;
+	}
+	/**
+	 * @param parentResourcePool the parentResourcePool to set
+	 */
+	public void setParentResourcePool(String parentResourcePool) {
+		this.parentResourcePool = parentResourcePool;
+	}
+	/**
+	 * @return the alternativeGuestName
+	 */
+	public String getAlternativeGuestName() {
+		return alternativeGuestName;
+	}
+	/**
+	 * @param alternativeGuestName the alternativeGuestName to set
+	 */
+	public void setAlternativeGuestName(String alternativeGuestName) {
+		this.alternativeGuestName = alternativeGuestName;
+	}
+	/**
+	 * @return the annotation
+	 */
+	public String getAnnotation() {
+		return annotation;
+	}
+	/**
+	 * @param annotation the annotation to set
+	 */
+	public void setAnnotation(String annotation) {
+		this.annotation = annotation;
+	}
+	/**
+	 * @return the guestId
+	 */
+	public String getGuestId() {
+		return guestId;
+	}
+	/**
+	 * @param guestId the guestId to set
+	 */
+	public void setGuestId(String guestId) {
+		this.guestId = guestId;
+	}
+	/**
+	 * @return the memoryMB
+	 */
+	public int getMemoryMB() {
+		return memoryMB;
+	}
+	/**
+	 * @param memoryMB the memoryMB to set
+	 */
+	public void setMemoryMB(int memoryMB) {
+		this.memoryMB = memoryMB;
+	}
+	/**
+	 * @return the numCoresPerSocket
+	 */
+	public int getNumCoresPerSocket() {
+		return numCoresPerSocket;
+	}
+	/**
+	 * @param numCoresPerSocket the numCoresPerSocket to set
+	 */
+	public void setNumCoresPerSocket(int numCoresPerSocket) {
+		this.numCoresPerSocket = numCoresPerSocket;
+	}
+	/**
+	 * @return the numCPUs
+	 */
+	public int getNumCPUs() {
+		return numCPUs;
+	}
+	/**
+	 * @param numCPUs the numCPUs to set
+	 */
+	public void setNumCPUs(int numCPUs) {
+		this.numCPUs = numCPUs;
 	}
 }

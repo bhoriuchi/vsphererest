@@ -33,7 +33,6 @@ package com.vmware.vsphere.rest.models.v5;
 import java.rmi.RemoteException;
 
 import com.vmware.vim25.mo.HostSystem;
-import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 
 /**
@@ -82,108 +81,44 @@ public class RESTHostConfigManager extends RESTDynamicData {
 	}
 	
 	public void init(HostSystem mo, String uri, String fields) {
-		// to speed performance, only get field data that was requested
-		FieldGet fg = new FieldGet();
 		
 		try {
 			
-			// specific fields	
-			if (fg.get("advancedOption", fields)) {
-				this.setAdvancedOption(new ManagedObjectReferenceUri().getUri(mo.getOptionManager(), uri));
-			}
-			//fix this
-			if (fg.get("authenticationManager", fields)) {
-				this.setAuthenticationManager(null);
-			}	
-			if (fg.get("autoStartManager", fields)) {
-				this.setAutoStartManager(new ManagedObjectReferenceUri().getUri(mo.getHostAutoStartManager(), uri));
-			}	
-			if (fg.get("bootDeviceSystem", fields)) {
-				this.setBootDeviceSystem(new ManagedObjectReferenceUri().getUri(mo.getHostBootDeviceSystem(), uri));
-			}				
-			if (fg.get("cacheConfigurationManager", fields)) {
-				this.setCacheConfigurationManager(new ManagedObjectReferenceUri().getUri(mo.getHostCacheConfigurationManager(), uri));
-			}			
-			if (fg.get("cpuScheduler", fields)) {
-				this.setCpuScheduler(new ManagedObjectReferenceUri().getUri(mo.getHostCpuSchedulerSystem(), uri));
-			}
-			if (fg.get("datastoreSystem", fields)) {
-				this.setDatastoreSystem(new ManagedObjectReferenceUri().getUri(mo.getHostDatastoreSystem(), uri));
-			}
-			if (fg.get("dateTimeSystem", fields)) {
-				this.setDateTimeSystem(new ManagedObjectReferenceUri().getUri(mo.getHostDateTimeSystem(), uri));
-			}
-			if (fg.get("diagnosticSystem", fields)) {
-				this.setDiagnosticSystem(new ManagedObjectReferenceUri().getUri(mo.getHostDiagnosticSystem(), uri));
-			}
-			if (fg.get("esxAgentHostManager", fields)) {
-				this.setEsxAgentHostManager(new ManagedObjectReferenceUri().getUri(mo.getHostEsxAgentHostManager(), uri));
-			}
-			if (fg.get("firewallSystem", fields)) {
-				this.setFirewallSystem(new ManagedObjectReferenceUri().getUri(mo.getHostFirewallSystem(), uri));
-			}
-			if (fg.get("firmwareSystem", fields)) {
-				this.setFirmwareSystem(new ManagedObjectReferenceUri().getUri(mo.getHostFirmwareSystem(), uri));
-			}
-			if (fg.get("healthStatusSystem", fields)) {
-				this.setHealthStatusSystem(new ManagedObjectReferenceUri().getUri(mo.getHealthStatusSystem(), uri));
-			}
-			if (fg.get("imageConfigManager", fields)) {
-				this.setImageConfigManager(new ManagedObjectReferenceUri().getUri(mo.getHostImageConfigManager(), uri));
-			}
-			if (fg.get("iscsiManager", fields)) {
-				this.setIscsiManager(new ManagedObjectReferenceUri().getUri(mo.getIscsiManager(), uri));
-			}
-			if (fg.get("kernelModuleSystem", fields)) {
-				this.setKernelModuleSystem(new ManagedObjectReferenceUri().getUri(mo.getHostKernelModuleSystem(), uri));
-			}
-			if (fg.get("licenseManager", fields)) {
-				this.setLicenseManager(new ManagedObjectReferenceUri().getUri(mo.getLicenseManager(), uri));
-			}
-			if (fg.get("memoryManager", fields)) {
-				this.setMemoryManager(new ManagedObjectReferenceUri().getUri(mo.getHostMemorySystem(), uri));
-			}					
-			if (fg.get("networkSystem", fields)) {
-				this.setNetworkSystem(new ManagedObjectReferenceUri().getUri(mo.getHostNetworkSystem(), uri));
-			}					
-			if (fg.get("patchManager", fields)) {
-				this.setPatchManager(new ManagedObjectReferenceUri().getUri(mo.getHostPatchManager(), uri));
-			}					
-			if (fg.get("pciPassthruSystem", fields)) {
-				this.setPciPassthruSystem(new ManagedObjectReferenceUri().getUri(mo.getHostPciPassthruSystem(), uri));
-			}
+			ManagedObjectReferenceUri m = new ManagedObjectReferenceUri();
 			
-			// fix
-			if (fg.get("powerSystem", fields)) {
-				this.setPowerSystem(null);
-			}					
-			if (fg.get("serviceSystem", fields)) {
-				this.setServiceSystem(new ManagedObjectReferenceUri().getUri(mo.getHostServiceSystem(), uri));
-			}					
-			if (fg.get("snmpSystem", fields)) {
-				this.setSnmpSystem(new ManagedObjectReferenceUri().getUri(mo.getHostSnmpSystem(), uri));
-			}					
-			if (fg.get("storageSystem", fields)) {
-				this.setStorageSystem(new ManagedObjectReferenceUri().getUri(mo.getHostStorageSystem(), uri));
-			}					
-			if (fg.get("virtualNicManager", fields)) {
-				this.setVirtualNicManager(new ManagedObjectReferenceUri().getUri(mo.getHostVirtualNicManager(), uri));
-			}					
-			if (fg.get("vmotionSystem", fields)) {
-				this.setVmotionSystem(null);
-			}					
 
-			
-			
-			
-			
+			// get reference URIs for each manager
+			this.setAdvancedOption(m.getUri(mo.getOptionManager(), uri));
+			this.setAuthenticationManager(uri + "hostauthenticationmanagers/" + mo.getMOR().getVal().replace("host", "authenticationManager"));
+			this.setAutoStartManager(m.getUri(mo.getHostAutoStartManager(), uri));
+			this.setBootDeviceSystem(m.getUri(mo.getHostBootDeviceSystem(), uri));
+			this.setCacheConfigurationManager(m.getUri(mo.getHostCacheConfigurationManager(), uri));
+			this.setCpuScheduler(m.getUri(mo.getHostCpuSchedulerSystem(), uri));
+			this.setDatastoreSystem(m.getUri(mo.getHostDatastoreSystem(), uri));
+			this.setDateTimeSystem(m.getUri(mo.getHostDateTimeSystem(), uri));
+			this.setDiagnosticSystem(m.getUri(mo.getHostDiagnosticSystem(), uri));
+			this.setEsxAgentHostManager(m.getUri(mo.getHostEsxAgentHostManager(), uri));
+			this.setFirewallSystem(m.getUri(mo.getHostFirewallSystem(), uri));
+			this.setFirmwareSystem(m.getUri(mo.getHostFirmwareSystem(), uri));
+			this.setHealthStatusSystem(m.getUri(mo.getHealthStatusSystem(), uri));
+			this.setImageConfigManager(m.getUri(mo.getHostImageConfigManager(), uri));
+			this.setIscsiManager(m.getUri(mo.getIscsiManager(), uri));
+			this.setKernelModuleSystem(m.getUri(mo.getHostKernelModuleSystem(), uri));
+			this.setLicenseManager(m.getUri(mo.getLicenseManager(), uri));
+			this.setMemoryManager(m.getUri(mo.getHostMemorySystem(), uri));
+			this.setNetworkSystem(m.getUri(mo.getHostNetworkSystem(), uri));
+			this.setPatchManager(m.getUri(mo.getHostPatchManager(), uri));
+			this.setPciPassthruSystem(m.getUri(mo.getHostPciPassthruSystem(), uri));
+			this.setPowerSystem(uri + "hostpowersystems/" + mo.getMOR().getVal().replace("host", "powerSystem"));
+			this.setServiceSystem(m.getUri(mo.getHostServiceSystem(), uri));
+			this.setSnmpSystem(m.getUri(mo.getHostSnmpSystem(), uri));
+			this.setStorageSystem(m.getUri(mo.getHostStorageSystem(), uri));
+			this.setVirtualNicManager(m.getUri(mo.getHostVirtualNicManager(), uri));
+			this.setVmotionSystem(uri + "hostvmotionsystems/" + mo.getMOR().getVal().replace("host", "vmotionSystem"));
+
 			// extended from RESTDynamicData
-			if (fg.get("dynamicProperty", fields)) {
-				this.setDynamicProperty(null);
-			}
-			if (fg.get("dynamicType", fields)) {
-				this.setDynamicType(null);
-			}
+			this.setDynamicProperty(null);
+			this.setDynamicType(null);
 			
 			
 		} catch (RemoteException e) {
@@ -569,9 +504,5 @@ public class RESTHostConfigManager extends RESTDynamicData {
 	public void setVmotionSystem(String vmotionSystem) {
 		this.vmotionSystem = vmotionSystem;
 	}
-
-
-
-
 
 }

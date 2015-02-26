@@ -67,6 +67,7 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 	private AlarmState[] declaredAlarmState;
 	private String[] disabledMethod;
 	private int[] effectiveRole;
+	private String label;
 	private String name;
 	private ManagedEntityStatus overallStatus;
 	private String parent;
@@ -100,6 +101,9 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 			}
 			if (fg.get("effectiveRole", fields)) {
 				this.setEffectiveRole(mo.getEffectiveRole());
+			}
+			if (fg.get("label", fields)) {
+				this.setLabel(mo.getName());
 			}
 			if (fg.get("name", fields)) {
 				this.setName(mo.getName());
@@ -476,5 +480,19 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 	 */
 	public void setTriggeredAlarmState(AlarmState[] triggeredAlarmState) {
 		this.triggeredAlarmState = triggeredAlarmState;
+	}
+
+	/**
+	 * @return the label
+	 */
+	public String getLabel() {
+		return label;
+	}
+
+	/**
+	 * @param label the label to set
+	 */
+	public void setLabel(String label) {
+		this.label = label;
 	}
 }

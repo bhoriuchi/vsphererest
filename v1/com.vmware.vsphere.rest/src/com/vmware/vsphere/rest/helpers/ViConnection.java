@@ -215,9 +215,10 @@ public class ViConnection {
 		ManagedObjectReference mor = new ManagedObjectReference();
 		mor.setType(type);
 		mor.setVal(moUri.getId(id));
+		
 		ManagedObject mo = MorUtil.createExactManagedObject(this.getSi()
 				.getServerConnection(), mor);
-
+		
 		return mo;
 	}
 

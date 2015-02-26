@@ -501,6 +501,7 @@ public class ManagedObjectController {
 					return m.invoke(o, args);
 				}
 			}
+			
 			return Response.status(404).build();
 
 		} catch (NullPointerException e) {

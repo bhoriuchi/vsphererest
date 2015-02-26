@@ -30,16 +30,27 @@ POSSIBILITY OF SUCH DAMAGE.
 package com.vmware.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.List;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+
+import com.vmware.vim25.ResourceAllocationInfo;
 import com.vmware.vim25.ResourceConfigSpec;
 import com.vmware.vim25.ResourcePoolRuntimeInfo;
 import com.vmware.vim25.ResourcePoolSummary;
+import com.vmware.vim25.SharesInfo;
+import com.vmware.vim25.SharesLevel;
+import com.vmware.vim25.mo.ClusterComputeResource;
 import com.vmware.vim25.mo.ResourcePool;
+import com.vmware.vsphere.rest.helpers.ConditionHelper;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceArray;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
 import com.vmware.vsphere.rest.helpers.FieldGet;
+import com.vmware.vsphere.rest.helpers.ViConnection;
 
 /**
 * @author Branden Horiuchi (bhoriuchi@gmail.com)
@@ -104,6 +115,116 @@ public class RESTResourcePool extends RESTManagedEntity {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	
+	/*
+	 * create a new object of this type
+	 */
+	public Response create(String vimType, String vimClass, String restClass,
+			String viServer, HttpHeaders headers, String sessionKey,
+			String fields, String thisUri, RESTRequestBody body) {
+
+		// initialize classes
+		ConditionHelper ch = new ConditionHelper();
+		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+		ViConnection v = new ViConnection(headers, sessionKey, viServer);
+		ResourcePool rp = null;
+		ResourcePool parentPool = null;
+		ClusterComputeResource cl = null;
+		ResourceConfigSpec spec = null;
+
+
+		// check the body
+		if (ch.checkCondition((body != null),
+				"No message body was specified in the request").isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		}
+
+		// attempt to create
+		try {
+			
+			// check fields and create resourcepool
+			if (!ch.checkCondition((body.getName() != null), "Name not specified").isFailed()) {
+				if (body.getClusterComputeResource() != null && !ch.getEntity(!ch.isFailed(), "ClusterComputeResource", body.getClusterComputeResource(), v, false).isFailed()) {
+					cl = (ClusterComputeResource) ch.getObj();
+					parentPool = cl.getResourcePool();
+				}
+				else if (body.getParentResourcePool() != null && !ch.getEntity(!ch.isFailed(), "ResourcePool", body.getParentResourcePool(), v, false).isFailed()) {
+					parentPool = (ResourcePool) ch.getObj();
+				}
+				
+				// check that a parent resource pool exists
+				if (!ch.checkCondition((parentPool != null), "No parent Resource Pool found").isFailed()) {
+					
+					
+					// check for specification
+					if (body.getSpec() == null) {
+
+						// create a new resource config spec
+						spec = new ResourceConfigSpec();
+
+						// create a cpu allocation
+						ResourceAllocationInfo cpuAlloc = new ResourceAllocationInfo();
+						SharesInfo cpuShareInfo = new SharesInfo();
+						cpuAlloc.setExpandableReservation(true);
+						cpuAlloc.setLimit((long) -1);
+						cpuAlloc.setReservation((long) 0);
+						cpuShareInfo.setLevel(SharesLevel.normal);
+						cpuShareInfo.setShares(parentPool.getConfig().getCpuAllocation().getShares().getShares());
+						cpuAlloc.setShares(cpuShareInfo);
+						spec.setCpuAllocation(cpuAlloc);					
+						
+						// create a memory allocation
+						ResourceAllocationInfo memAlloc = new ResourceAllocationInfo();					
+						SharesInfo memShareInfo = new SharesInfo();						
+						memAlloc.setExpandableReservation(true);
+						memAlloc.setLimit((long) -1);
+						memAlloc.setReservation((long) 0);
+						memShareInfo.setLevel(SharesLevel.normal);
+						memShareInfo.setShares(parentPool.getConfig().getMemoryAllocation().getShares().getShares());
+						memAlloc.setShares(memShareInfo);
+						spec.setMemoryAllocation(memAlloc);
+
+					}
+					else {
+						spec = (ResourceConfigSpec) body.getSpec();
+					}
+					
+					// attempt to create the resource pool
+					rp = parentPool.createResourcePool(body.getName(), spec);
+				}
+			}
+			
+			// check that the object was created
+			ch.checkCondition((rp != null), "Failed to create Resource Pool");
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			ch.setFailed(true);
+			ch.getResponse().setResponseStatus("failed");
+			ch.getResponse().getResponseMessage().add("Unknown Error");
+		}
+
+		// check if the request failed
+		if (ch.isFailed()) {
+			return Response.status(400).entity(ch.getResponse()).build();
+		} else {
+			try {
+				return Response.created(new URI(moUri.getUri(rp, thisUri)))
+						.entity(new RESTResourcePool(rp, thisUri, fields))
+						.build();
+			} catch (URISyntaxException e) {
+				ch.setFailed(true);
+				ch.getResponse().setResponseStatus("failed");
+				ch.getResponse().getResponseMessage()
+						.add("Invalid URI created");
+			}
+		}
+
+		return null;
+	}
+	
 
 	/**
 	 * @return the childConfiguration

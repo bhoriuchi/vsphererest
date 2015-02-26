@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
+import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.mo.ManagedObject;
 import com.vmware.vsphere.rest.helpers.FieldGet;
 import com.vmware.vsphere.rest.helpers.ManagedObjectReferenceUri;
@@ -76,28 +77,29 @@ public class RESTManagedObject {
 		try {
 
 			// initialize classes
+			ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
+			ViConnection v = new ViConnection(headers, sessionKey, viServer);
 			Class<?> vim = Class.forName(vimClass);
 			Class<?> rest = Class.forName(restClass);
 			Object mo = rest.newInstance();
 			Object m = null;
+
 			
 			// check for managed entities
 			if (RESTManagedEntity.class.isAssignableFrom(rest)) {
 
-				m = new ViConnection().getEntity(vimType, id, headers,
-						sessionKey, viServer);
+				m = v.getEntity(vimType, id);
 				
 			}
 			// check for non managed entities
 			else {
 
-				m = new ViConnection().getManagedObject(vimType, id, headers,
-						sessionKey, viServer);
+				m = v.getManagedObject(vimType, id);
 			}
 
 			// create the REST object if it exists
 			if (m != null) {
-
+				
 				// create parameter/argument array and init the rest class
 				Class<?> params[] = { vim, String.class, String.class };
 				Object args[] = { vim.cast(m), thisUri, fieldStr };
@@ -105,6 +107,24 @@ public class RESTManagedObject {
 				method.invoke(mo, args);
 
 				return Response.ok().entity(mo).build();
+			}
+			else {
+				
+				System.out.println("create more for null");
+				
+				// create a managed object reference
+				ManagedObjectReference mor = new ManagedObjectReference();
+				mor.setType(vimType);
+				mor.setVal(moUri.getId(id));
+				
+				// create parameter/argument array and init the rest class
+				Class<?> params[] = { ManagedObjectReference.class, String.class, String.class, ViConnection.class };
+				Object args[] = { mor, thisUri, fieldStr, v };
+				Method method = rest.getMethod("init", params);
+				method.invoke(mo, args);
+
+				return Response.ok().entity(mo).build();
+				
 			}
 
 		} catch (NullPointerException e) {
