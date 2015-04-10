@@ -19,6 +19,8 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
+
+
 /*
  import com.codahale.metrics.MetricRegistry;
  import com.codahale.metrics.SharedMetricRegistries;
@@ -95,8 +97,16 @@ public class PropertyFilteringMessageBodyWriter implements
 		 * in the annotation as well as an all switch to return all values
 		 * Branden Horiuchi <bhoriuchi@gmail.com>
 		 */
+		List<String> values = null;
 		List<String> defaultValue = Arrays.asList(defaults.split(","));
-		List<String> values = uriInfo.getQueryParameters().getOrDefault(name, defaultValue);
+		MultivaluedMap <String, String> queryParams = uriInfo.getPathParameters();
+		
+		if (queryParams == null || queryParams.get(name) == null) {
+			values = defaultValue;
+		}
+		else {
+			values = queryParams.get(name);
+		}
 		if (values.contains("all")) { values = null; }
 		
 		List<String> properties = new ArrayList<String>();

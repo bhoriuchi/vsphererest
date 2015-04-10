@@ -4,17 +4,16 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
 	id="WebApp_ID" version="3.0">
 	<display-name>vSphere REST</display-name>
-
 	<servlet>
 		<servlet-name>vSphere REST</servlet-name>
 		<servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
 		<init-param>
-			<param-name>jersey.config.server.provider.packages</param-name>
-			<param-value>com.vmware.vsphere.rest.controllers</param-value>
+			<param-name>javax.ws.rs.Application</param-name>
+			<param-value>com.vbranden.vsphere.rest.vSphereRESTApplication</param-value>
 		</init-param>
 		<init-param>
-			<param-name>javax.ws.rs.Application</param-name>
-			<param-value>com.vmware.vsphere.rest.vSphereRESTApplication</param-value>
+			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+			<param-value>true</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
@@ -23,7 +22,15 @@
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
 	<context-param>
-		<param-name>vsphereRestProperties</param-name>
-		<param-value>vsphereRest.properties</param-value>
+		<param-name>resteasy.scan</param-name>
+		<param-value>false</param-value>
+	</context-param>
+	<context-param>
+		<param-name>resteasy.scan.resources</param-name>
+		<param-value>false</param-value>
+	</context-param>
+	<context-param>
+		<param-name>resteasy.scan.providers</param-name>
+		<param-value>false</param-value>
 	</context-param>
 </web-app>
