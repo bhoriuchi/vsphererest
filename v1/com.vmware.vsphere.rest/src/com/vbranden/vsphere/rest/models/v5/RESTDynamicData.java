@@ -64,8 +64,4 @@ public class RESTDynamicData {
 	public void setDynamicType(String dynamicType) {
 		this.dynamicType = dynamicType;
 	}
-
-
-	
-
 }

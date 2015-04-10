@@ -35,7 +35,6 @@ import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ConditionHelper;
@@ -188,13 +187,11 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, RESTRequestBody body) {
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		ResourcePool rp = null;
 		ClusterComputeResource cl = null;
 		Folder f = null;
@@ -214,20 +211,20 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 			// get the resource pool
 			if (body.getClusterComputeResource() != null
 					&& !ch.getEntity(!ch.isFailed(), "ClusterComputeResource",
-							body.getClusterComputeResource(), v, false)
+							body.getClusterComputeResource(), vi, false)
 							.isFailed()) {
 				cl = (ClusterComputeResource) ch.getObj();
 				rp = cl.getResourcePool();
 			} else if (body.getResourcePool() != null
 					&& !ch.getEntity(!ch.isFailed(), "ResourcePool",
-							body.getResourcePool(), v, false).isFailed()) {
+							body.getResourcePool(), vi, false).isFailed()) {
 				rp = (ResourcePool) ch.getObj();
 			}
 
 			// get the host
 			if (body.getHostSystem() != null
 					&& !ch.getEntity(!ch.isFailed(), "HostSystem",
-							body.getHostSystem(), v, false).isFailed()) {
+							body.getHostSystem(), vi, false).isFailed()) {
 				h = (HostSystem) ch.getObj();
 			}
 
@@ -238,7 +235,7 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 				
 				// a name is required for a virtual machine, create a default if it is null
 				if (body.getName() == null) {
-					body.setName(this.getNextVmName(v, "New Virtual Machine"));
+					body.setName(this.getNextVmName(vi, "New Virtual Machine"));
 				}
 
 				ch.setObj(spec);
@@ -268,7 +265,7 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 				// to the pool
 				if (body.getParentFolder() != null
 						&& !ch.getEntity(!ch.isFailed(), "Folder",
-								body.getParentFolder(), v, false).isFailed()) {
+								body.getParentFolder(), vi, false).isFailed()) {
 					f = (Folder) ch.getObj();
 					t = f.createVM_Task(spec, rp, h);
 

@@ -35,7 +35,6 @@ import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ConditionHelper;
@@ -104,13 +103,11 @@ public class RESTFolder extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, RESTRequestBody body) {
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Folder f = null;
 		Folder nf = null;
 
@@ -127,10 +124,10 @@ public class RESTFolder extends RESTManagedEntity {
 			if (!ch.checkCondition((body.getName() != null), "Name not specified").isFailed()) {
 				
 				// get the parent folder
-				if (body.getParentFolder() != null && !ch.getEntity(!ch.isFailed(), "Folder", body.getParentFolder(), v).isFailed()) {
+				if (body.getParentFolder() != null && !ch.getEntity(!ch.isFailed(), "Folder", body.getParentFolder(), vi).isFailed()) {
 					f = (Folder) ch.getObj();
 				}
-				else if (body.getDatacenter() != null && !ch.getEntity(!ch.isFailed(), "Datacenter", body.getDatacenter(), v).isFailed()) {
+				else if (body.getDatacenter() != null && !ch.getEntity(!ch.isFailed(), "Datacenter", body.getDatacenter(), vi).isFailed()) {
 					
 					Datacenter dc = (Datacenter) ch.getObj();
 					

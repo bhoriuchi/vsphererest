@@ -34,7 +34,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ConditionHelper;
@@ -121,13 +120,12 @@ public class RESTComputeResource extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
+			ViConnection vi,
 			String fields, String thisUri, RESTRequestBody body) {
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		ClusterComputeResource cl = null;
 
 		// check the body
@@ -144,7 +142,7 @@ public class RESTComputeResource extends RESTManagedEntity {
 			ch.checkCondition((body.getDatacenter() != null),
 					"Datacenter not specified");
 			if (body.getDatacenter() != null && !ch.getEntity(!ch.isFailed(), "Datacenter",
-					body.getDatacenter(), v).isFailed()) {
+					body.getDatacenter(), vi).isFailed()) {
 
 				// create an empty spec if one doesnt exist
 				if (body.getSpec() == null) {

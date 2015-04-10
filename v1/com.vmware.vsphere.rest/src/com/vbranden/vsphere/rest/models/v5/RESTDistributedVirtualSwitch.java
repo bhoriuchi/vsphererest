@@ -34,7 +34,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ArrayHelper;
@@ -125,15 +124,13 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, RESTRequestBody body) {
 
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ArrayHelper ah = new ArrayHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Folder f = null;
 		Task t = null;
 
@@ -149,13 +146,13 @@ public class RESTDistributedVirtualSwitch extends RESTManagedEntity {
 			// get the parent folder. it can either be specified by the user or be placed in the root network folder on the datacenter
 			if (body.getDatacenter() != null) {
 				
-				Datacenter dc = (Datacenter) v.getEntity("Datacenter",
+				Datacenter dc = (Datacenter) vi.getEntity("Datacenter",
 						body.getDatacenter());
 				f = dc.getNetworkFolder();
 				
 			} else if (body.getParentFolder() != null) {
 
-				f = (Folder) v.getEntity("Folder", body.getParentFolder());
+				f = (Folder) vi.getEntity("Folder", body.getParentFolder());
 			}
 			
 			// verify folder

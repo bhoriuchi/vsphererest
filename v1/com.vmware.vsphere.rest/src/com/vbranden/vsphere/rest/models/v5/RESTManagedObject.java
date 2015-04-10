@@ -32,7 +32,6 @@ package com.vbranden.vsphere.rest.models.v5;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.FieldGet;
@@ -71,14 +70,12 @@ public class RESTManagedObject {
 	 * get a specific object of this type by id
 	 */
 	public Response getById(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fieldStr, String thisUri, String id) {
+			ViConnection vi, String fieldStr, String thisUri, String id) {
 
 		try {
 
 			// initialize classes
 			ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-			ViConnection v = new ViConnection(headers, sessionKey, viServer);
 			Class<?> vim = Class.forName(vimClass);
 			Class<?> rest = Class.forName(restClass);
 			Object mo = rest.newInstance();
@@ -88,13 +85,13 @@ public class RESTManagedObject {
 			// check for managed entities
 			if (RESTManagedEntity.class.isAssignableFrom(rest)) {
 
-				m = v.getEntity(vimType, id);
+				m = vi.getEntity(vimType, id);
 				
 			}
 			// check for non managed entities
 			else {
 
-				m = v.getManagedObject(vimType, id);
+				m = vi.getManagedObject(vimType, id);
 			}
 
 			// create the REST object if it exists
@@ -119,7 +116,7 @@ public class RESTManagedObject {
 				
 				// create parameter/argument array and init the rest class
 				Class<?> params[] = { ManagedObjectReference.class, String.class, String.class, ViConnection.class };
-				Object args[] = { mor, thisUri, fieldStr, v };
+				Object args[] = { mor, thisUri, fieldStr, vi };
 				Method method = rest.getMethod("init", params);
 				method.invoke(mo, args);
 

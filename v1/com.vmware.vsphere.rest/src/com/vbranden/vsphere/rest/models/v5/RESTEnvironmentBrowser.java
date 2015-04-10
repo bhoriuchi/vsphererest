@@ -78,7 +78,4 @@ public class RESTEnvironmentBrowser extends RESTManagedObject {
 	public void setDatastoreBrowser(String datastoreBrowser) {
 		this.datastoreBrowser = datastoreBrowser;
 	}
-
-
-
 }

@@ -60,6 +60,8 @@ public class ViConnection {
 	private ServerConnection sc;
 	private String sdk;
 	private String SessionKey;
+	private String sessionString;
+	private boolean endSessionOnComplete;
 	private static String basic = "Basic ";
 
 	// constructor
@@ -100,6 +102,12 @@ public class ViConnection {
 						+ this.getSessionKey() + "\"";
 				this.setSi(new ServiceInstance(new URL(this.getSdk()), session,
 						true));
+				
+				// set the flag to keep the session alive on completing
+				SessionIdHelper keyHelper = new SessionIdHelper(this.getSi());
+				this.setSessionKey(keyHelper.getSessionId());
+				this.setSessionString(keyHelper.getSessionString());
+				this.setEndSessionOnComplete(false);
 			}
 
 			// otherwise try basic authentication
@@ -122,6 +130,13 @@ public class ViConnection {
 					// try to connect and set the service instance
 					this.setSi(new ServiceInstance(new URL(this.getSdk()),
 							values[0], values[1], true));
+					
+					// get the session key
+					SessionIdHelper keyHelper = new SessionIdHelper(this.getSi());
+					this.setSessionKey(keyHelper.getSessionId());
+					this.setSessionString(keyHelper.getSessionString());
+					this.setEndSessionOnComplete(true);
+					
 				}
 			}
 
@@ -229,15 +244,23 @@ public class ViConnection {
 		return getManagedObject(type, id);
 	}
 
-	// close a session
+	// close a session with a force
 	public void closeSession(boolean force) {
 
+		this.setEndSessionOnComplete(force);
+		this.closeSession();
+	}
+	
+	// close a session
+	public void closeSession() {
+		
 		try {
 
-			if (force || this.getSessionKey() == null) {
+			if (this.isEndSessionOnComplete()) {
 
 				if (this.getSi().getSessionManager() != null) {
 					System.out.println("logging session out");
+					//this.getSi().getSessionManager().terminateSession(new String[] {this.getSessionString()});
 					this.getSi().getSessionManager().logout();
 				} else {
 					System.out.println("no session to log out");
@@ -346,6 +369,34 @@ public class ViConnection {
 	 */
 	public void setViServer(String viServer) {
 		this.viServer = viServer;
+	}
+
+	/**
+	 * @return the endSessionOnComplete
+	 */
+	public boolean isEndSessionOnComplete() {
+		return endSessionOnComplete;
+	}
+
+	/**
+	 * @param endSessionOnComplete the endSessionOnComplete to set
+	 */
+	public void setEndSessionOnComplete(boolean endSessionOnComplete) {
+		this.endSessionOnComplete = endSessionOnComplete;
+	}
+
+	/**
+	 * @return the sessionString
+	 */
+	public String getSessionString() {
+		return sessionString;
+	}
+
+	/**
+	 * @param sessionString the sessionString to set
+	 */
+	public void setSessionString(String sessionString) {
+		this.sessionString = sessionString;
 	}
 
 }

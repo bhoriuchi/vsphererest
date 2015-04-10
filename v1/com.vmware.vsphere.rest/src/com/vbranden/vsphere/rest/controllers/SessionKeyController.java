@@ -30,8 +30,6 @@ POSSIBILITY OF SUCH DAMAGE.
 package com.vbranden.vsphere.rest.controllers;
 
 import java.util.Hashtable;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -42,6 +40,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.vbranden.vsphere.rest.helpers.SessionIdHelper;
 import com.vbranden.vsphere.rest.helpers.ViConnection;
 import com.vmware.vim25.mo.ServiceInstance;
 
@@ -63,30 +62,25 @@ public class SessionKeyController {
 	public Response getEntity(@Context HttpHeaders headers,
 			@PathParam("viServer") String viServer) {
 
-		ServiceInstance si = new ViConnection().getServiceInstance(headers, null, viServer);
+		ViConnection vi = new ViConnection();
+		ServiceInstance si = vi.getServiceInstance(headers, null, viServer);
+		SessionIdHelper keyHelper = new SessionIdHelper();
 
 		if (si != null) {
-			String keyStr = si.getServerConnection().getSessionStr();
 			
-			if (keyStr != null) {
-
-				Pattern p = Pattern.compile("\"(.*?)\"");
-				Matcher m = p.matcher(keyStr);
-				
-				if(m.find()) {
-					String key = m.group(1);
+			String key = keyHelper.getSessionId(si);
+			
+			if (key != null) {
 					
-					Hashtable<String, String> keyObject = new Hashtable<String, String>();
-					keyObject.put("sessionKey", key);
-					
-					return Response.ok().entity(keyObject).build();
-				}	
+				Hashtable<String, String> keyObject = new Hashtable<String, String>();
+				keyObject.put("sessionKey", key);
+				vi.setEndSessionOnComplete(false);
+				return Response.ok().entity(keyObject).build();
 			}
 		}
 		else {
 			return Response.status(401).build();
 		}
-		
 		return null;
 	}
 	

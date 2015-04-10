@@ -34,7 +34,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ConditionHelper;
@@ -121,13 +120,11 @@ public class RESTDatastore extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, RESTRequestBody body) {
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Datastore d = null;
 
 		// check the body
@@ -147,7 +144,7 @@ public class RESTDatastore extends RESTManagedEntity {
 			// get the host system
 			if (body.getHostSystem() != null
 					&& !ch.getEntity(!ch.isFailed(), "HostSystem",
-							body.getHostSystem(), v).isFailed()) {
+							body.getHostSystem(), vi).isFailed()) {
 
 				// get the HostDatastoreSystem
 				HostSystem h = (HostSystem) ch.getObj();

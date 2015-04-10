@@ -36,7 +36,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ConditionHelper;
@@ -137,15 +136,13 @@ public class RESTDatacenter extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, RESTRequestBody body) {
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		Datacenter dc = null;
-		Folder rootFolder = v.getSi().getRootFolder();
+		Folder rootFolder = vi.getSi().getRootFolder();
 
 		// check the body
 		if (ch.checkCondition((body != null),
@@ -201,8 +198,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 	 * update this object
 	 */
 	public Response update(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, String id, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, String id, RESTRequestBody body) {
 
 		// initialize a custom response
 		RESTCustomResponse cr = new RESTCustomResponse("",
@@ -220,8 +216,8 @@ public class RESTDatacenter extends RESTManagedEntity {
 		try {
 
 			// Get the entity that matches the id
-			ManagedEntity m = new ViConnection().getEntity("Datacenter", id,
-					headers, sessionKey, viServer);
+			
+			ManagedEntity m = vi.getEntity("Datacenter", id);
 
 			if (m != null) {
 
@@ -260,15 +256,13 @@ public class RESTDatacenter extends RESTManagedEntity {
 	 * get this objects children
 	 */
 	public Response getChildren(String vimType, String vimClass,
-			String restClass, String viServer, HttpHeaders headers,
-			String sessionKey, String search, String fieldStr, String thisUri,
+			String restClass, ViConnection vi, String search, String fieldStr, String thisUri,
 			String id, String childType, int start, int position, int results) {
 
 		try {
 
 			// Get the entity that matches the id
-			ManagedEntity m = new ViConnection().getEntity("Datacenter", id,
-					headers, sessionKey, viServer);
+			ManagedEntity m = vi.getEntity("Datacenter", id);
 
 			if (m == null) {
 				return Response.status(404).build();

@@ -35,7 +35,6 @@ import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ConditionHelper;
@@ -122,13 +121,12 @@ public class RESTResourcePool extends RESTManagedEntity {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
+			ViConnection vi,
 			String fields, String thisUri, RESTRequestBody body) {
 
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		ResourcePool rp = null;
 		ResourcePool parentPool = null;
 		ClusterComputeResource cl = null;
@@ -146,11 +144,11 @@ public class RESTResourcePool extends RESTManagedEntity {
 			
 			// check fields and create resourcepool
 			if (!ch.checkCondition((body.getName() != null), "Name not specified").isFailed()) {
-				if (body.getClusterComputeResource() != null && !ch.getEntity(!ch.isFailed(), "ClusterComputeResource", body.getClusterComputeResource(), v, false).isFailed()) {
+				if (body.getClusterComputeResource() != null && !ch.getEntity(!ch.isFailed(), "ClusterComputeResource", body.getClusterComputeResource(), vi, false).isFailed()) {
 					cl = (ClusterComputeResource) ch.getObj();
 					parentPool = cl.getResourcePool();
 				}
-				else if (body.getParentResourcePool() != null && !ch.getEntity(!ch.isFailed(), "ResourcePool", body.getParentResourcePool(), v, false).isFailed()) {
+				else if (body.getParentResourcePool() != null && !ch.getEntity(!ch.isFailed(), "ResourcePool", body.getParentResourcePool(), vi, false).isFailed()) {
 					parentPool = (ResourcePool) ch.getObj();
 				}
 				

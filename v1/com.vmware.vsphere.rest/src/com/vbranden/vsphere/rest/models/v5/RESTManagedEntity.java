@@ -36,7 +36,6 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ArrayHelper;
@@ -145,14 +144,12 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 	 * get all objects of this type
 	 */
 	public Response getAll(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String search, String fieldStr, String thisUri, int start,
+			ViConnection vi, String search, String fieldStr, String thisUri, int start,
 			int position, int results) {
 
 		try {
 
-			ManagedEntity[] e = new ViConnection().getEntities(vimType,
-					headers, sessionKey, viServer);
+			ManagedEntity[] e = vi.getEntities(vimType);
 
 			List<Object> m = new ManagedObjectReferenceArray().getObjectArray(
 					e, Class.forName(vimClass), Class.forName(restClass),
@@ -181,13 +178,11 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 	 * remove this object
 	 */
 	public Response remove(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, String id) {
+			ViConnection vi, String fields, String thisUri, String id) {
 		try {
 
 			// Get the entity that matches the id
-			ManagedEntity m = new ViConnection().getEntity(vimType, id,
-					headers, sessionKey, viServer);
+			ManagedEntity m = vi.getEntity(vimType, id);
 
 			if (m != null) {
 
@@ -236,8 +231,7 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 	 * create a child object of this type
 	 */
 	public Response createChild(String vimType, String vimClass,
-			String restClass, String viServer, HttpHeaders headers,
-			String sessionKey, String apiVersion, String fields,
+			String restClass, ViConnection vi, String apiVersion, String fields,
 			String thisUri, String id, String childType, RESTRequestBody body) {
 
 		// define the allowed child types
@@ -264,8 +258,7 @@ public class RESTManagedEntity extends RESTExtensibleManagedObject {
 		} else {
 			if (vimChildType == "ClusterComputeResource") {
 				body.setDatacenter(id);
-				return new RESTClusterComputeResource().create("", "", "",
-						viServer, headers, sessionKey, fields, thisUri, body);
+				return new RESTClusterComputeResource().create("", "", "", vi, fields, thisUri, body);
 			}
 		}
 

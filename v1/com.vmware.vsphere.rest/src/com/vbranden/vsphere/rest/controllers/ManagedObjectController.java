@@ -52,6 +52,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.reflections.Reflections;
 
+import com.vbranden.vsphere.rest.helpers.ViConnection;
 import com.vbranden.vsphere.rest.models.v5.RESTCustomResponse;
 import com.vbranden.vsphere.rest.models.v5.RESTManagedObject;
 import com.vbranden.vsphere.rest.models.v5.RESTRequestBody;
@@ -80,6 +81,9 @@ public class ManagedObjectController {
 
 	final static String v5ModelPackage = "com.vbranden.vsphere.rest.models.v5";
 	final static String defaultModelPackage = v5ModelPackage;
+	
+	// global vi connection
+	private ViConnection vi;
 
 	// initialize
 	@Context
@@ -238,6 +242,7 @@ public class ManagedObjectController {
 			String objectType, int start, int results) {
 
 		// initialize variables
+		this.setVi(new ViConnection(headers, sessionKey, viServer));
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		int position = 0;
 		String fieldStr = defaults;
@@ -251,10 +256,9 @@ public class ManagedObjectController {
 		}
 
 		Class<?> params[] = { String.class, String.class, String.class,
-				String.class, HttpHeaders.class, String.class, String.class,
+				ViConnection.class, String.class,
 				String.class, String.class, int.class, int.class, int.class };
-		Object args[] = { "vimType", "vimClass", "restClass", viServer,
-				headers, sessionKey, search, fieldStr, thisUri, start,
+		Object args[] = { "vimType", "vimClass", "restClass", this.getVi(), search, fieldStr, thisUri, start,
 				position, results };
 
 		// call the getAll function
@@ -263,10 +267,12 @@ public class ManagedObjectController {
 
 		// return the results
 		if (r != null) {
+			this.getVi().closeSession();
 			return (Response) r;
 		}
 
-		return null;
+		this.getVi().closeSession();
+		return Response.status(204).build();
 	}
 
 	/*
@@ -278,6 +284,7 @@ public class ManagedObjectController {
 			int results) {
 
 		// initialize variables
+		this.setVi(new ViConnection(headers, sessionKey, viServer));
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		int position = 0;
 		String fieldStr = defaults;
@@ -291,10 +298,9 @@ public class ManagedObjectController {
 		}
 
 		Class<?> params[] = { String.class, String.class, String.class,
-				String.class, HttpHeaders.class, String.class, String.class,
+				ViConnection.class, String.class,
 				String.class, String.class };
-		Object args[] = { "vimType", "vimClass", "restClass", viServer,
-				headers, sessionKey, fieldStr, thisUri, id };
+		Object args[] = { "vimType", "vimClass", "restClass", this.getVi(), fieldStr, thisUri, id };
 
 		// get the object by id
 		Object mo = this.callMethodByName(objectType, "getById", params, args,
@@ -309,11 +315,10 @@ public class ManagedObjectController {
 
 			// set params/args for getChildren method
 			Class<?> childParams[] = { String.class, String.class,
-					String.class, String.class, HttpHeaders.class,
-					String.class, String.class, String.class, String.class,
+					String.class, ViConnection.class, String.class, String.class, String.class,
 					String.class, String.class, int.class, int.class, int.class };
 			Object childArgs[] = { "vimType", "vimClass", "restClass",
-					viServer, headers, sessionKey, search, fieldStr, thisUri,
+					this.getVi(), search, fieldStr, thisUri,
 					id, childType, start, position, results };
 
 			// get the children
@@ -321,11 +326,13 @@ public class ManagedObjectController {
 					childParams, childArgs, apiVersion);
 
 			// if the response is not null build an ok response
+			this.getVi().closeSession();
 			return (Response) cr;
 
-		} else {
-			return r;
 		}
+		
+		this.getVi().closeSession();
+		return r;
 	}
 
 	/*
@@ -336,6 +343,7 @@ public class ManagedObjectController {
 			String objectType, String childType, RESTRequestBody body) {
 
 		// initialize variables
+		this.setVi(new ViConnection(headers, sessionKey, viServer));
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		String fieldStr = defaults;
 		if (fields != null) {
@@ -346,17 +354,17 @@ public class ManagedObjectController {
 
 			// create parameter/argument array
 			Class<?> params[] = { String.class, String.class, String.class,
-					String.class, HttpHeaders.class, String.class,
+					ViConnection.class,
 					String.class, String.class, String.class, String.class,
 					String.class, RESTRequestBody.class };
-			Object args[] = { "vimType", "vimClass", "restClass", viServer,
-					headers, sessionKey, apiVersion, fieldStr, thisUri, id,
+			Object args[] = { "vimType", "vimClass", "restClass", this.getVi(), apiVersion, fieldStr, thisUri, id,
 					childType, body };
 
 			// call the create method
 			Object r = this.callMethodByName(objectType, "createChild", params,
 					args, apiVersion);
 			if (r != null) {
+				this.getVi().closeSession();
 				return (Response) r;
 			}
 		}
@@ -365,20 +373,20 @@ public class ManagedObjectController {
 
 			// create parameter/argument array
 			Class<?> params[] = { String.class, String.class, String.class,
-					String.class, HttpHeaders.class, String.class,
+					ViConnection.class,
 					String.class, String.class, RESTRequestBody.class };
-			Object args[] = { "vimType", "vimClass", "restClass", viServer,
-					headers, sessionKey, fieldStr, thisUri, body };
+			Object args[] = { "vimType", "vimClass", "restClass", this.getVi(), fieldStr, thisUri, body };
 
 			// call the create method
 			Object r = this.callMethodByName(objectType, "create", params,
 					args, apiVersion);
 			if (r != null) {
+				this.getVi().closeSession();
 				return (Response) r;
 			}
 		}
-
-		return null;
+		this.getVi().closeSession();
+		return Response.status(204).build();
 	}
 
 	/*
@@ -389,6 +397,7 @@ public class ManagedObjectController {
 			String objectType, String childType, RESTRequestBody body) {
 
 		// initialize variables
+		this.setVi(new ViConnection(headers, sessionKey, viServer));
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		String fieldStr = defaults;
 		if (fields != null) {
@@ -396,19 +405,20 @@ public class ManagedObjectController {
 		}
 
 		Class<?> params[] = { String.class, String.class, String.class,
-				String.class, HttpHeaders.class, String.class, String.class,
+				ViConnection.class, String.class,
 				String.class, String.class, RESTRequestBody.class };
-		Object args[] = { "vimType", "vimClass", "restClass", viServer,
-				headers, sessionKey, fieldStr, thisUri, id, body };
+		Object args[] = { "vimType", "vimClass", "restClass", this.getVi(), fieldStr, thisUri, id, body };
 
 		// call the create method
 		Object r = this.callMethodByName(objectType, "update", params, args,
 				apiVersion);
 		if (r != null) {
+			this.getVi().closeSession();
 			return (Response) r;
 		}
-
-		return null;
+		
+		this.getVi().closeSession();
+		return Response.status(204).build();
 
 	}
 
@@ -418,7 +428,9 @@ public class ManagedObjectController {
 	private Response removeEntityEx(String viServer, HttpHeaders headers,
 			String sessionKey, String apiVersion, String id, String fields,
 			String objectType) {
+		
 		// initialize variables
+		this.setVi(new ViConnection(headers, sessionKey, viServer));
 		String thisUri = uri.getBaseUri().toString() + viServer + "/";
 		String fieldStr = defaults;
 		if (fields != null) {
@@ -427,19 +439,21 @@ public class ManagedObjectController {
 
 		// create parameter/argument array
 		Class<?> params[] = { String.class, String.class, String.class,
-				String.class, HttpHeaders.class, String.class, String.class,
+				ViConnection.class, String.class,
 				String.class, String.class };
-		Object args[] = { "vimType", "vimClass", "restClass", viServer,
-				headers, sessionKey, fieldStr, thisUri, id };
+		Object args[] = { "vimType", "vimClass", "restClass", this.getVi(), fieldStr, thisUri, id };
 
 		// call the create method
 		Object r = this.callMethodByName(objectType, "remove", params, args,
 				apiVersion);
 		if (r != null) {
+			
+			this.getVi().closeSession();
 			return (Response) r;
 		}
 
-		return null;
+		this.getVi().closeSession();
+		return Response.status(204).build();
 	}
 
 	/*
@@ -533,5 +547,19 @@ public class ManagedObjectController {
 		}
 
 		return null;
+	}
+
+	/**
+	 * @return the vi
+	 */
+	public ViConnection getVi() {
+		return vi;
+	}
+
+	/**
+	 * @param vi the vi to set
+	 */
+	public void setVi(ViConnection vi) {
+		this.vi = vi;
 	}
 }

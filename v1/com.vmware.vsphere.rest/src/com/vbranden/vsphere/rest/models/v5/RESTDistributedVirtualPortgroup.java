@@ -33,7 +33,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import com.vbranden.vsphere.rest.helpers.ArrayHelper;
@@ -120,15 +119,13 @@ public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 	 * create a new object of this type
 	 */
 	public Response create(String vimType, String vimClass, String restClass,
-			String viServer, HttpHeaders headers, String sessionKey,
-			String fields, String thisUri, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, RESTRequestBody body) {
 
 		
 		// initialize classes
 		ConditionHelper ch = new ConditionHelper();
 		DefaultValuesHelper dh = new DefaultValuesHelper().init();
 		ManagedObjectReferenceUri moUri = new ManagedObjectReferenceUri();
-		ViConnection v = new ViConnection(headers, sessionKey, viServer);
 		VmwareDistributedVirtualSwitch s = null;
 		Task t = null;
 		
@@ -147,7 +144,7 @@ public class RESTDistributedVirtualPortgroup extends RESTNetwork {
 			
 			// get dvSwitch
 			if (body.getDistributedVirtualSwitch() != null && !ch.getEntity(!ch.isFailed(), "VmwareDistributedVirtualSwitch",
-							body.getDistributedVirtualSwitch(), v).isFailed()) {
+							body.getDistributedVirtualSwitch(), vi).isFailed()) {
 				
 				// get the switch as a variable
 				s = (VmwareDistributedVirtualSwitch) ch.getObj();
