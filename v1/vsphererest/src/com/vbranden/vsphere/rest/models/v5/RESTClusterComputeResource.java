@@ -30,6 +30,11 @@ POSSIBILITY OF SUCH DAMAGE.
 package com.vbranden.vsphere.rest.models.v5;
 
 import java.lang.reflect.InvocationTargetException;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.vbranden.vsphere.rest.helpers.FieldGet;
@@ -42,8 +47,15 @@ import com.vmware.vim25.ClusterDrsFaults;
 import com.vmware.vim25.ClusterDrsMigration;
 import com.vmware.vim25.ClusterDrsRecommendation;
 import com.vmware.vim25.ClusterRecommendation;
+import com.vmware.vim25.InvalidProperty;
+import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.ClusterComputeResource;
+import com.vmware.vim25.mo.Datastore;
+import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.Network;
+import com.vmware.vim25.mo.ResourcePool;
+import com.vmware.vim25.mo.StoragePod;
 
 /**
 * @author Branden Horiuchi (bhoriuchi@gmail.com)
@@ -59,6 +71,7 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	private ClusterDrsRecommendation[] drsRecommendation;
 	private ClusterDrsMigration[] migrationHistory;
 	private ClusterRecommendation[] recommendation;
+	private List<String> storagePod;
 
 	// constructor
 	public RESTClusterComputeResource() {
@@ -108,6 +121,13 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 				this.setDatastore(new ManagedObjectReferenceArray()
 						.getMORArray(mo.getDatastores(), uri));
 			}
+			if (fg.get("storagePod", fields)) {
+				
+				StoragePod[] podArray = this.getStoragePods(viConnection, mo);
+				
+				this.setStoragePod(new ManagedObjectReferenceArray()
+						.getMORArray(podArray, uri));
+			}		
 			if (fg.get("environmentBrowser", fields)) {
 
 				this.setEnvironmentBrowser(new ManagedObjectReferenceUri()
@@ -163,6 +183,133 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	}
 	
 
+	/*
+	 * get this objects children
+	 */
+	public Response getChildren(String vimType, String vimClass,
+			String restClass, ViConnection vi, String search, String fieldStr, String thisUri,
+			String id, String childType, int start, int position, int results) {
+
+		try {
+
+			// Get the entity that matches the id
+			ManagedEntity m = vi.getEntity("ClusterComputeResource", id);
+
+			if (m == null) {
+				return Response.status(404).build();
+			}
+
+			// type cast the object
+			ClusterComputeResource mo = (ClusterComputeResource) m;
+			Object e = null;
+
+			if (childType.toLowerCase().equals("resourcepool")) {
+
+				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo.getResourcePool().getResourcePools(),
+						ResourcePool.class, RESTResourcePool.class, search, thisUri,
+						fieldStr, position, start, results, false);
+			}
+			else if (childType.toLowerCase().equals("datastore")) {
+
+				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo.getDatastores(),
+						Datastore.class, RESTDatastore.class, search, thisUri,
+						fieldStr, position, start, results, false);
+			}
+			else if (childType.toLowerCase().equals("storagepod")) {
+				
+				StoragePod[] podArray = this.getStoragePods(vi, mo);
+				
+				e = new ManagedObjectReferenceArray().getObjectArray(vi, podArray,
+						StoragePod.class, RESTStoragePod.class, search, thisUri,
+						fieldStr, position, start, results, false);
+
+			}
+			else if (childType.toLowerCase().equals("network")) {
+
+				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo.getNetworks(),
+						Network.class, RESTNetwork.class, search, thisUri,
+						fieldStr, position, start, results, false);
+			}
+			else if (childType.toLowerCase().equals("hostsystem")) {
+
+				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo.getHosts(),
+						HostSystem.class, RESTHostSystem.class, search, thisUri,
+						fieldStr, position, start, results, false);
+			}
+			
+
+			if (e == null) {
+				return Response.status(404).build();
+			} else {
+				return Response.ok().entity(e).build();
+			}
+
+		} catch (NullPointerException e) {
+			// TODO Auto-generated catch block
+			// e.printStackTrace();
+		} catch (InvalidProperty e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RuntimeFault e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return Response.status(404).build();
+
+	}
+	
+	
+	private StoragePod[] getStoragePods(ViConnection vi, ClusterComputeResource mo) {
+		Datastore[] datastores = mo.getDatastores();
+		ManagedEntity[] storagePods = vi.getEntities("StoragePod");
+		List<String> datastoreIds = new ArrayList<String>();
+		List<String> podIds = new ArrayList<String>();
+		List<StoragePod> pods = new ArrayList<StoragePod>();
+		
+		// get a list of all datastore ids
+		for (Datastore datastore : datastores) {
+			datastoreIds.add(datastore.getMOR().getVal());
+		}
+		
+		// find the datastores that belong to the pods
+		if (storagePods != null && storagePods.length > 0) {
+			
+
+			for (ManagedEntity p : storagePods) {
+				StoragePod sp = (StoragePod) p;
+				
+				try {
+					for (ManagedEntity child : sp.getChildEntity()) {
+						
+						if (datastoreIds.contains(child.getMOR().getVal()) && !podIds.contains(sp.getMOR().getVal())) {
+							
+							podIds.add(sp.getMOR().getVal());
+							pods.add(sp);
+						}
+					}
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+
+		// initialize an empty array
+		StoragePod[] podArray = new StoragePod[0];
+		
+		if (pods.size() > 0) {
+			podArray = pods.toArray(new StoragePod[pods.size()]);
+		}
+
+		return podArray;
+
+	}
+	
+	
 	/*
 	 * update this object
 	 */
@@ -256,6 +403,20 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 	 */
 	public void setRecommendation(ClusterRecommendation[] recommendation) {
 		this.recommendation = recommendation;
+	}
+
+	/**
+	 * @return the storagePod
+	 */
+	public List<String> getStoragePod() {
+		return storagePod;
+	}
+
+	/**
+	 * @param storagePod the storagePod to set
+	 */
+	public void setStoragePod(List<String> storagePod) {
+		this.storagePod = storagePod;
 	}
 
 }

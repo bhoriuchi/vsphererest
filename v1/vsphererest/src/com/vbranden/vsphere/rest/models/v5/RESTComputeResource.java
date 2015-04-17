@@ -119,8 +119,6 @@ public class RESTComputeResource extends RESTManagedEntity {
 		}
 	}
 	
-
-	
 	
 	/*
 	 * create a new object of this type

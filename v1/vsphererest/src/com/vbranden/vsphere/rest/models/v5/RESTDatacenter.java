@@ -4,14 +4,14 @@ Copyright (c) 2015 Branden Horiuchi. All Rights Reserved.
 Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, 
+ * Redistributions of source code must retain the above copyright notice, 
 this list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice, 
+ * Redistributions in binary form must reproduce the above copyright notice, 
 this list of conditions and the following disclaimer in the documentation 
 and/or other materials provided with the distribution.
 
-* Neither the name of VMware, Inc. nor the names of its contributors may be used
+ * Neither the name of VMware, Inc. nor the names of its contributors may be used
 to endorse or promote products derived from this software without specific prior 
 written permission.
 
@@ -57,14 +57,15 @@ import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Network;
+import com.vmware.vim25.mo.StoragePod;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import com.vmware.vim25.mo.VmwareDistributedVirtualSwitch;
 
 /**
-* @author Branden Horiuchi (bhoriuchi@gmail.com)
-* @version 5
-*/
+ * @author Branden Horiuchi (bhoriuchi@gmail.com)
+ * @version 5
+ */
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RESTDatacenter extends RESTManagedEntity {
@@ -82,14 +83,16 @@ public class RESTDatacenter extends RESTManagedEntity {
 	}
 
 	// overloaded constructor
-	public RESTDatacenter(ViConnection viConnection, Datacenter mo, String uri, String fields) {
+	public RESTDatacenter(ViConnection viConnection, Datacenter mo, String uri,
+			String fields) {
 		this.init(viConnection, mo, uri, fields);
 	}
 
 	/*
 	 * initialize the object
 	 */
-	public void init(ViConnection viConnection, Datacenter mo, String uri, String fields) {
+	public void init(ViConnection viConnection, Datacenter mo, String uri,
+			String fields) {
 		// to speed performance, only get field data that was requested
 		FieldGet fg = new FieldGet();
 
@@ -156,10 +159,11 @@ public class RESTDatacenter extends RESTManagedEntity {
 		try {
 
 			// check fields and create datacenter
-			if (!ch.checkCondition((body.getName() != null), "Name not specified").isFailed()) {
+			if (!ch.checkCondition((body.getName() != null),
+					"Name not specified").isFailed()) {
 				dc = rootFolder.createDatacenter(body.getName());
 			}
-			
+
 			// check that the datacenter was created
 			ch.checkCondition((dc != null), "Failed to create Datacenter");
 
@@ -200,7 +204,8 @@ public class RESTDatacenter extends RESTManagedEntity {
 	 * update this object
 	 */
 	public Response update(String vimType, String vimClass, String restClass,
-			ViConnection vi, String fields, String thisUri, String id, RESTRequestBody body) {
+			ViConnection vi, String fields, String thisUri, String id,
+			RESTRequestBody body) {
 
 		// initialize a custom response
 		RESTCustomResponse cr = new RESTCustomResponse("",
@@ -218,7 +223,7 @@ public class RESTDatacenter extends RESTManagedEntity {
 		try {
 
 			// Get the entity that matches the id
-			
+
 			ManagedEntity m = vi.getEntity("Datacenter", id);
 
 			if (m != null) {
@@ -231,7 +236,8 @@ public class RESTDatacenter extends RESTManagedEntity {
 					Task t = mo.rename_Task(body.getName());
 
 					return Response.created(new URI(moUri.getUri(t, thisUri)))
-							.entity(new RESTTask(vi, t, thisUri, fields)).build();
+							.entity(new RESTTask(vi, t, thisUri, fields))
+							.build();
 				} else {
 
 					cr.setResponseStatus("failed");
@@ -258,8 +264,9 @@ public class RESTDatacenter extends RESTManagedEntity {
 	 * get this objects children
 	 */
 	public Response getChildren(String vimType, String vimClass,
-			String restClass, ViConnection vi, String search, String fieldStr, String thisUri,
-			String id, String childType, int start, int position, int results) {
+			String restClass, ViConnection vi, String search, String fieldStr,
+			String thisUri, String id, String childType, int start,
+			int position, int results) {
 
 		try {
 
@@ -276,10 +283,51 @@ public class RESTDatacenter extends RESTManagedEntity {
 
 			if (childType.toLowerCase().equals("datastore")) {
 
-				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo
-						.getDatastoreFolder().getChildEntity(),
-						Datastore.class, RESTDatastore.class, search, thisUri,
-						fieldStr, position, start, results, true);
+				e = new ManagedObjectReferenceArray().getObjectArray(vi,
+						mo.getDatastores(), Datastore.class,
+						RESTDatastore.class, search, thisUri, fieldStr,
+						position, start, results, true);
+			} else if (childType.toLowerCase().equals("storagepod")) {
+
+				Datastore[] datastores = mo.getDatastores();
+				ManagedEntity[] storagePods = vi.getEntities("StoragePod");
+				List<String> datastoreIds = new ArrayList<String>();
+				List<String> podIds = new ArrayList<String>();
+				List<StoragePod> pods = new ArrayList<StoragePod>();
+				
+				// get a list of all datastore ids
+				for (Datastore datastore : datastores) {
+					datastoreIds.add(datastore.getMOR().getVal());
+				}
+				
+				// find the datastores that belong to the pods
+				if (storagePods != null && storagePods.length > 0) {
+					
+
+					for (ManagedEntity p : storagePods) {
+						StoragePod sp = (StoragePod) p;
+						
+						for (ManagedEntity child : sp.getChildEntity()) {
+							
+							if (datastoreIds.contains(child.getMOR().getVal()) && !podIds.contains(sp.getMOR().getVal())) {
+								
+								podIds.add(sp.getMOR().getVal());
+								pods.add(sp);
+							}
+						}
+					}
+				}
+
+				// initialize an empty array
+				StoragePod[] podArray = new StoragePod[0];
+				
+				if (pods.size() > 0) {
+					podArray = pods.toArray(new StoragePod[pods.size()]);
+				}
+
+				e = new ManagedObjectReferenceArray().getObjectArray(vi, podArray,
+						StoragePod.class, RESTStoragePod.class, search, thisUri,
+						fieldStr, position, start, results, false);
 			} else if (childType.toLowerCase().equals("hostsystem")) {
 
 				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo
@@ -295,10 +343,10 @@ public class RESTDatacenter extends RESTManagedEntity {
 						fieldStr, position, start, results, false);
 			} else if (childType.toLowerCase().equals("network")) {
 
-				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo
-						.getNetworkFolder().getChildEntity(), Network.class,
-						RESTNetwork.class, search, thisUri, fieldStr, position,
-						start, results, true);
+				e = new ManagedObjectReferenceArray().getObjectArray(vi,
+						mo.getNetworks(), Network.class, RESTNetwork.class,
+						search, thisUri, fieldStr, position, start, results,
+						true);
 			} else if (childType.toLowerCase().equals(
 					"distributedvirtualportgroup")) {
 
