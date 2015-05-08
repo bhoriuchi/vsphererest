@@ -48,7 +48,9 @@ import com.vbranden.vsphere.rest.controllers.Test;
 
 public class vSphereRESTApplication extends Application {
     public Set<Class<?>> getClasses() {
+    	
         Set<Class<?>> classes = new HashSet<Class<?>>();
+        classes.add(CORSResponseFilter.class);
         classes.add(PropertyFilteringMessageBodyWriter.class);
         classes.add(ExampleController.class);
         classes.add(ManagedObjectController.class);

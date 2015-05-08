@@ -29,7 +29,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package com.vbranden.vsphere.rest.helpers;
 
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.URL;
 import java.rmi.RemoteException;
 
@@ -78,6 +81,32 @@ public class ViConnection {
 		}
 	}
 	
+	// function to test a port
+	public static boolean serverListening(String host, int port)
+	{
+	    Socket s = null;
+	    try
+	    {
+	        //s = new Socket(host, port);
+	    	s = new Socket();
+	    	SocketAddress sa = new InetSocketAddress(host, port);
+	    	s.connect(sa, 5 * 1000);
+	    	
+	        return true;
+	    }
+	    catch (Exception e)
+	    {
+	    	System.out.println("Connectivity test to " + host + " on port " + port + " failed.");
+	        return false;
+	    }
+	    finally
+	    {
+	        if(s != null)
+	            try {s.close();}
+	            catch(Exception e){}
+	    }
+	}
+	
 	// overloaded getServiceInstance
 	public ServiceInstance getServiceInstance(HttpHeaders headers,
 			String sessionKey, String viServer) {
@@ -95,6 +124,11 @@ public class ViConnection {
 
 		// the sdk url is always required
 		if (this.getSdk() == null || this.getSdk() == "") {
+			return null;
+		}
+		
+		// test the viServer for connectivity
+		if (!serverListening(this.getViServer(), 443)) {
 			return null;
 		}
 
