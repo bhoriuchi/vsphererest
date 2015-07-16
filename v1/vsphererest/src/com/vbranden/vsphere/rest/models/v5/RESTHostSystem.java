@@ -169,7 +169,12 @@ public class RESTHostSystem extends RESTManagedEntity {
 
 			// check if the parent is a cluster compute resource
 			if (e.getMOR().getType().equals("ClusterComputeResource")) {
-				po.setClusterComputeResource(e.getMOR());
+				ClusterComputeResource cl = (ClusterComputeResource) this.getViConnection()
+						.getEntity(e.getMOR().getType(), e.getMOR().getVal());
+				
+				RESTNamedManagedEntity rcl = new RESTNamedManagedEntity(this.getViConnection(), 
+						cl, this.getUri(), "all");
+				po.setClusterComputeResource(rcl);
 			}
 			
 			// move to the next parent
@@ -178,7 +183,12 @@ public class RESTHostSystem extends RESTManagedEntity {
 
 		// if the last parent was a datacenter, set it
 		if (e != null && e.getMOR().getType().equals("Datacenter")) {
-			po.setDatacenter(e.getMOR());
+			Datacenter dc = (Datacenter) this.getViConnection()
+					.getEntity(e.getMOR().getType(), e.getMOR().getVal());
+			
+			RESTNamedManagedEntity rdc = new RESTNamedManagedEntity(this.getViConnection(), 
+					dc, this.getUri(), "all");
+			po.setDatacenter(rdc);
 		}
 
 		// return the object

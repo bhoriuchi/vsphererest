@@ -68,6 +68,7 @@ import com.vmware.vim25.VirtualMachineStorageInfo;
 import com.vmware.vim25.VirtualMachineSummary;
 import com.vmware.vim25.VmConfigFault;
 import com.vmware.vim25.mo.ClusterComputeResource;
+import com.vmware.vim25.mo.Datacenter;
 //import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
@@ -198,11 +199,14 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 		
 		// get host
 		ManagedObjectReference h = vm.getRuntime().getHost();
-		po.setHostSystem(h);
+		HostSystem host = (HostSystem) this.getViConnection()
+				.getEntity(h.getType(), h.getVal());
+
+		RESTNamedManagedEntity rhost = new RESTNamedManagedEntity(this.getViConnection(), 
+				host, this.getUri(), "all");
+		po.setHostSystem(rhost);
 		
 		// get host parents until we reach the datacenter
-		ManagedEntity me = this.getViConnection().getEntity("HostSystem", h.getVal());
-		HostSystem host = (HostSystem) me;
 		ManagedEntity e = host.getParent();
 
 		// get parent objects until we reach the root folder
@@ -210,7 +214,14 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 
 			// check if the parent is a cluster compute resource
 			if (e.getMOR().getType().equals("ClusterComputeResource")) {
-				po.setClusterComputeResource(e.getMOR());
+				
+				ClusterComputeResource cl = (ClusterComputeResource) this.getViConnection()
+						.getEntity(e.getMOR().getType(), e.getMOR().getVal());
+				
+				RESTNamedManagedEntity rcl = new RESTNamedManagedEntity(this.getViConnection(), 
+						cl, this.getUri(), "all");
+				po.setClusterComputeResource(rcl);
+
 			}
 			
 			// move to the next parent
@@ -219,7 +230,12 @@ public class RESTVirtualMachine extends RESTManagedEntity {
 
 		// if the last parent was a datacenter, set it
 		if (e != null && e.getMOR().getType().equals("Datacenter")) {
-			po.setDatacenter(e.getMOR());
+			Datacenter dc = (Datacenter) this.getViConnection()
+					.getEntity(e.getMOR().getType(), e.getMOR().getVal());
+			
+			RESTNamedManagedEntity rdc = new RESTNamedManagedEntity(this.getViConnection(), 
+					dc, this.getUri(), "all");
+			po.setDatacenter(rdc);
 		}
 
 		// return the object

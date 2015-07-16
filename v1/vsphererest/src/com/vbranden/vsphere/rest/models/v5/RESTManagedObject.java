@@ -56,10 +56,16 @@ public class RESTManagedObject {
 	
 	@JsonIgnore
 	private ViConnection viConnection;
+	@JsonIgnore
+	private String uri;
+	@JsonIgnore
+	private String fields;
 
 	public void setManagedObject(ViConnection viConnection, ManagedObject mo, String fields, String uri) {
 		
 		this.setViConnection(viConnection);
+		this.setUri(uri);
+		this.setFields(fields);
 		
 		FieldGet fg = new FieldGet();
 
@@ -218,6 +224,22 @@ public class RESTManagedObject {
 	 */
 	public void setViConnection(ViConnection viConnection) {
 		this.viConnection = viConnection;
+	}
+
+	public String getUri() {
+		return uri;
+	}
+
+	public void setUri(String uri) {
+		this.uri = uri;
+	}
+
+	public String getFields() {
+		return fields;
+	}
+
+	public void setFields(String fields) {
+		this.fields = fields;
 	}
 
 }

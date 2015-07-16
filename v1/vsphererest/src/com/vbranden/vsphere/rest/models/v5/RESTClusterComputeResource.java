@@ -50,6 +50,7 @@ import com.vmware.vim25.ClusterRecommendation;
 import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.ClusterComputeResource;
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Datastore;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.ManagedEntity;
@@ -175,7 +176,12 @@ public class RESTClusterComputeResource extends RESTComputeResource {
 
 		// if the last parent was a datacenter, set it
 		if (e != null && e.getMOR().getType().equals("Datacenter")) {
-			po.setDatacenter(e.getMOR());
+			Datacenter dc = (Datacenter) this.getViConnection()
+					.getEntity(e.getMOR().getType(), e.getMOR().getVal());
+			
+			RESTNamedManagedEntity rdc = new RESTNamedManagedEntity(this.getViConnection(), 
+					dc, this.getUri(), "all");
+			po.setDatacenter(rdc);
 		}
 
 		// return the object

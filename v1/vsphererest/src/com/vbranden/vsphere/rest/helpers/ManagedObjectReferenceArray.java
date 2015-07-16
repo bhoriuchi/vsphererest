@@ -74,6 +74,53 @@ public class ManagedObjectReferenceArray {
 		return null;
 	}
 
+	public List<ManagedEntity> flattenEntity(ManagedEntity e, String type, List<ManagedEntity> l) {
+		
+		try {
+			
+			String eType = e.getMOR().getType();
+			ManagedEntity[] me = new ManagedEntity[0];
+			
+			if (eType.equals("Folder")) {
+				
+				Folder f = (Folder) e;
+				me = f.getChildEntity();
+			}
+			else if (eType.equals("ClusterComputeResource")) {
+				ClusterComputeResource c = (ClusterComputeResource) e;
+				
+				if (type.equalsIgnoreCase("HostSystem")) {
+					me = c.getHosts();
+				}
+				else if (type.equalsIgnoreCase("Datastore")) {
+					me = c.getDatastores();
+				}
+			}
+			
+			for (ManagedEntity m : me) {
+				if (!m.getMOR().getType().equalsIgnoreCase(type)) {
+					l.addAll(this.flattenEntity(m, type, l));
+				}
+				else {
+					l.add(m);
+				}
+			}
+			
+			
+		} catch (InvalidProperty e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RuntimeFault e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return l;
+		
+	}
 	
 	public List<ManagedEntity> flattenFolders(Folder f, String type, List<ManagedEntity> l)
 	{
@@ -83,7 +130,7 @@ public class ManagedObjectReferenceArray {
 			
 			for (ManagedEntity m : e) {
 				if (m.getMOR().getType().equals("Folder")) {
-					this.flattenFolders((Folder) m, type, l);
+					l.addAll(this.flattenFolders((Folder) m, type, l));
 				}
 				else if (m.getMOR().getType().equals(type)) {
 					l.add(m);
@@ -121,7 +168,7 @@ public class ManagedObjectReferenceArray {
 				//System.out.println(m.getMOR().getType() + " equals " + vimType.getSimpleName());
 				
 				if (m.getMOR().getType().equals("Folder") && flatten) {
-					mlist.addAll(this.flattenFolders((Folder) m, vimType.getSimpleName(), new ArrayList<ManagedEntity>()));
+					mlist.addAll(this.flattenEntity(m, vimType.getSimpleName(), new ArrayList<ManagedEntity>()));
 				}
 				else if (m.getMOR().getType().equals("ClusterComputeResource") && flatten) {
 					ClusterComputeResource cl = (ClusterComputeResource) m;

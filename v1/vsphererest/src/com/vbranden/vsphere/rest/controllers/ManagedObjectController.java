@@ -152,6 +152,7 @@ public class ManagedObjectController {
 			@QueryParam("sessionkey") String sessionKey,
 			@QueryParam("v") String apiVersion) {
 
+		//System.out.println("Child Type is: " + childType);
 		return this.getEntityByIdEx(viServer, headers, sessionKey, apiVersion,
 				id, fields, search, objectType, childType, start, results);
 	}

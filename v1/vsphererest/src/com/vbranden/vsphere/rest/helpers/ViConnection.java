@@ -192,7 +192,7 @@ public class ViConnection {
 			//e1.printStackTrace();
 			System.out.println("MalformedURLException from getServiceInstance");
 		} catch (RemoteException e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			System.out.println("RemoteException from getServiceInstance");
 		}
 

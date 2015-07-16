@@ -1,52 +1,62 @@
 package com.vbranden.vsphere.rest.models.v5;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.vmware.vim25.ManagedObjectReference;
+
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RESTParentObject {
 
-	private ManagedObjectReference hostSystem;
-	private ManagedObjectReference clusterComputeResource;
-	private ManagedObjectReference datacenter;
+
+	private RESTNamedManagedEntity hostSystem;
+	private RESTNamedManagedEntity clusterComputeResource;
+	private RESTNamedManagedEntity datacenter;
+	
+	
+	
 	/**
 	 * @return the hostSystem
 	 */
-	public ManagedObjectReference getHostSystem() {
+	public RESTNamedManagedEntity getHostSystem() {
 		return hostSystem;
 	}
 	/**
 	 * @param hostSystem the hostSystem to set
 	 */
-	public void setHostSystem(ManagedObjectReference hostSystem) {
+	public void setHostSystem(RESTNamedManagedEntity hostSystem) {
 		this.hostSystem = hostSystem;
 	}
 	/**
 	 * @return the clusterComputeResource
 	 */
-	public ManagedObjectReference getClusterComputeResource() {
+	public RESTNamedManagedEntity getClusterComputeResource() {
 		return clusterComputeResource;
 	}
 	/**
 	 * @param clusterComputeResource the clusterComputeResource to set
 	 */
 	public void setClusterComputeResource(
-			ManagedObjectReference clusterComputeResource) {
+			RESTNamedManagedEntity clusterComputeResource) {
 		this.clusterComputeResource = clusterComputeResource;
 	}
 	/**
 	 * @return the datacenter
 	 */
-	public ManagedObjectReference getDatacenter() {
+	public RESTNamedManagedEntity getDatacenter() {
 		return datacenter;
 	}
 	/**
 	 * @param datacenter the datacenter to set
 	 */
-	public void setDatacenter(ManagedObjectReference datacenter) {
+	public void setDatacenter(RESTNamedManagedEntity datacenter) {
 		this.datacenter = datacenter;
 	}
 
+	
+	
+	
+
+	
+	
 	
 	
 }

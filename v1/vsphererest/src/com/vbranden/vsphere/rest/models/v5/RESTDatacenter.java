@@ -334,13 +334,14 @@ public class RESTDatacenter extends RESTManagedEntity {
 						.getHostFolder().getChildEntity(), HostSystem.class,
 						RESTHostSystem.class, search, thisUri, fieldStr,
 						position, start, results, true);
+				
 			} else if (childType.toLowerCase().equals("clustercomputeresource")) {
 
 				e = new ManagedObjectReferenceArray().getObjectArray(vi, mo
 						.getHostFolder().getChildEntity(),
 						ClusterComputeResource.class,
 						RESTClusterComputeResource.class, search, thisUri,
-						fieldStr, position, start, results, false);
+						fieldStr, position, start, results, true);
 			} else if (childType.toLowerCase().equals("network")) {
 
 				e = new ManagedObjectReferenceArray().getObjectArray(vi,
